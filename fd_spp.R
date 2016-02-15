@@ -1,7 +1,7 @@
 # check working directory
-getwd
+getwd()
 
-# load necessary packages
+# load necessary packages: fossil, reshape2
 
 ##################### fossil ######
 if(require("fossil")){
@@ -16,15 +16,33 @@ if(require("fossil")){
   }
 }
 
+##################### reshape2 ######
+if(require("reshape2")){
+  print("reshape2 is loaded correctly")
+} else {
+  print("trying to install reshape2")
+  install.packages("reshape2")
+  if(require("reshape2")){
+    print("reshape2 installed and loaded")
+  } else {
+    stop("could not install reshape2")
+  }
+}
+
 ##### setting up sitexspecies matrix ####
 
 # read data into R:
-UK <- read.csv("ALL_Species_Ecoregions.csv")
+UK_data <- read.csv("ALL_Species_Ecoregions.csv")
 
-# check the data:
-head(UK)
-str(UK)
+# check the data loaded correctly:
+head(UK_data)
+str(UK_data)
 
-create.matrix(UK,tax.name="binomial",locality="eco_code")
+UK_ss <- create.matrix(UK_data,tax.name="binomial",locality="eco_code")
 
+#### data frame
+
+UK <- as.data.frame(UK_ss) # convert matrix to data frame
+UK <- cbind(binomial = rownames(UK), UK) # add species name column to data frame
+rownames(UK) <- NULL # turn off rownames for data frame
 
