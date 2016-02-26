@@ -101,51 +101,87 @@ UK_site <- t(UK_site) # transpose
 # read data into R:
 UK_trait <- read.csv("Trait_data_UK.csv", row.names = 2,
                      # add species names to rows
-                     colClasses = c("character","factor","factor","numeric","factor","factor","numeric","numeric","factor","factor"),
-                     # assign data types to variables
+                     # colClasses means -999 values stay as a factor level
                      col.names = c("id_no","binomial","activity","mass","diet","habitat","litter","longevity","terrestriality","trophic"))
                     # assign simple names to variables
 UK_trait$id_no <- NULL 
   # Turn off IUCN species id numbers (keep in data in case they become useful)
 
-for (i in (1:length(UK_trait))) {UK_trait[,i]=ifelse(UK_trait[,i]==-999, NA, UK_trait[,i])} 
-# convert -999's to NA
+UK_trait[UK_trait==-999] <- NA
+  # convert -999's to NA
 
-UK_trait$diet <- ordered(UK_trait$diet) ; UK_trait$habitat <- ordered(UK_trait$habitat)
-# set diet and habitat breadth as ordered factors
 UK_trait$activity <- factor(UK_trait$activity) ; UK_trait$terrestriality <- factor(UK_trait$terrestriality) ; UK_trait$trophic <- factor(UK_trait$trophic)
-# set activity, terrestriality and trophic level as factors
+  # set activity, terrestriality and trophic level as factors
 
 # check the data has been set up correctly:
 head(UK_trait)
 str(UK_trait)
 
-# data cleaning for NAs
+########### data cleaning for NAs
+species_remove <- UK_trait[!rowSums(is.na(UK_trait))<length(UK_trait),] # returns the rows that have all NAs for traits
+spp_col <- unique(grep(paste(as.character(rownames(species_remove)),collapse="|"), colnames(UK_site))) # finds column numbers in site data for species with all NAs for traits
 
-species_remove <- UK_trait[!rowSums(is.na(UK_trait))<length(UK_trait),]
-  # returns the rows that have all NAs for traits
-spp_col <- unique(grep(paste(as.character(rownames(species_remove)),collapse="|"), 
-                        colnames(UK_site)))
-  # finds column numbers in site data for species with all NAs for traits
-UK_site <- UK_site[,-c(spp_col)]
-  # removes NA species from site data
+# total number of species per ecoregion (including species with missing trait data)
+spp_total <- apply(UK_site, 1, sum)
 
-UK_trait <- UK_trait[rowSums(is.na(UK_trait))<length(UK_trait),] 
-  # returns the rows that have at least one non-NA value
+# missing data species
+spp_missing <- UK_site[,c(spp_col)] # matrix of missing data species per ecoregion
+rowSums(missing_spp) # number of missing data species per ecoregion
+
+# edit site data to match species in trait data
+UK_site <- UK_site[,-c(spp_col)] # removes NA species from site data
+UK_trait <- UK_trait[rowSums(is.na(UK_trait))<length(UK_trait),] # returns the rows that have at least one non-NA value for trait data
+
+isTRUE(nrow(UK_trait) == ncol(UK_site)) 
+  # do the site and trait data sets contain the same number of species? - should be TRUE
+
+# number of species per ecoregion
+spp_final <- apply(UK_site, 1, sum)
+
+# number of ecoregions assessed
+e <- dim(UK_site)[1]
+if (e > 1) print(paste("number of ecoregions assessed =", e[1]))
+  # print number of ecoregions assessed
+
+#UK_trait <- as.matrix(UK_trait)
+
+############### Functional indices ##############
 
 # combine trait and site data
 UK <- list(UK_trait, UK_site) ; names(UK) <- c("trait","site")
-dbUK <- dbFD(UK$trait, UK$site, corr = "cailliez")
 
+# calculate species x species distance matrix based on effect traits
 gd <- gowdis(UK$trait)
+
+
+dbUK <- dbFD(UK$trait, UK$site, corr = "cailliez", m = "min") # need a m argument to get it to run
+dbUK <- dbFD(UK$trait, UK$site, corr = "cailliez", calc.FRic = FALSE) # need FRic to be false to get it to run
+
+#dbUK <- dbFD(UK$trait, UK$site, corr = "cailliez") # try running this on remote desktop
+
+# Functional dispersion
+
 UK_dis <- fdisp(gd, UK$site)
 UK_dis$FDis
 
+# Community-weighted means
+
+UK_CWM <- functcomp(UK$trait, UK$site) # CWM.type = "all" if I want frequencies of each ordinal class
+UK_CWM
+
+# plot dengrogram of species based on effect traits
+dendro <- hclust(gd, method = "average")
+plot(dendro, main = "Cluster dengrogram based on effect traits", cex = 0.8)
+
+# find number of groups and return species assignation to groups
+egroup <- cutree(dendro, k = 8)
+
+# p = number of plots
+p <- nrow(UK$site)
+
+# gr = number of effect groups
+gr <- length(unique(egroup))
 
 
-dendro = hclust(gd, method = "average")
-plot(dendro)
-
-cut_dendro <- cutree(dendro, k = 10)
 
 

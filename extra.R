@@ -40,8 +40,11 @@ UK_trait <- read.csv("Trait_data_UK.csv",
 rownames(UK_trait) <- UK_trait$binomial
   # add species names to rows
 
+UK_trait$activity <- factor(UK_trait$activity) ; UK_trait$terrestriality <- factor(UK_trait$terrestriality) ; UK_trait$trophic <- factor(UK_trait$trophic)
+# set activity, terrestriality and trophic level as factors
 
 
+################################## Attempts to deal with NAs ###########################
 
 species_remove <- rownames(species_remove)
 
@@ -66,3 +69,11 @@ grep(as.character("Myotis mystacinus"), colnames(UK_site))
 
 UK_site[ , -which(names(as.character(UK_site)) %in% as.character(c(rownames(species_remove))))]
 
+
+
+# UK_trait[which(UK_trait==-999)] <- NA
+
+for (i in (1:length(UK_trait))) {UK_trait[,i]=ifelse(UK_trait[,i]==-999, NA, UK_trait[,i])} 
+
+UK_trait$diet <- ordered(UK_trait$diet) ; UK_trait$habitat <- ordered(UK_trait$habitat)
+# set diet and habitat breadth as ordered factors
