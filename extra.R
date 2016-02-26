@@ -77,3 +77,6 @@ for (i in (1:length(UK_trait))) {UK_trait[,i]=ifelse(UK_trait[,i]==-999, NA, UK_
 
 UK_trait$diet <- ordered(UK_trait$diet) ; UK_trait$habitat <- ordered(UK_trait$habitat)
 # set diet and habitat breadth as ordered factors
+
+if (e >= 0) print(paste("number of ecoregions assessed =", e[1]))
+# print number of ecoregions assessed

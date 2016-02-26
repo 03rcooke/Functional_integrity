@@ -126,7 +126,7 @@ spp_total <- apply(UK_site, 1, sum)
 
 # missing data species
 spp_missing <- UK_site[,c(spp_col)] # matrix of missing data species per ecoregion
-rowSums(missing_spp) # number of missing data species per ecoregion
+rowSums(spp_missing) # number of missing data species per ecoregion
 
 # edit site data to match species in trait data
 UK_site <- UK_site[,-c(spp_col)] # removes NA species from site data
@@ -140,7 +140,7 @@ spp_final <- apply(UK_site, 1, sum)
 
 # number of ecoregions assessed
 e <- dim(UK_site)[1]
-if (e > 1) print(paste("number of ecoregions assessed =", e[1]))
+if (e >= 0) print(paste("number of ecoregions assessed =", e[1]))
   # print number of ecoregions assessed
 
 #UK_trait <- as.matrix(UK_trait)
@@ -168,6 +168,10 @@ UK_dis$FDis
 
 UK_CWM <- functcomp(UK$trait, UK$site) # CWM.type = "all" if I want frequencies of each ordinal class
 UK_CWM
+
+
+
+
 
 # plot dengrogram of species based on effect traits
 dendro <- hclust(gd, method = "average")
