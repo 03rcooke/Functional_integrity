@@ -1,8 +1,8 @@
 FUN <- function(site, trait, plot_dendro, spp_list) 
 {
-  # load necessary packages: fossil, reshape2, data.table, FD, plyr
+  # load necessary packages: fossil, reshape2, data.table, FD, plyr, clue
   
-  ##################### fossil ##################
+  ##################### fossil ######
   if(require("fossil")){
     print("fossil is loaded correctly")
   } else {
@@ -64,6 +64,19 @@ FUN <- function(site, trait, plot_dendro, spp_list)
       print("plyr installed and loaded")
     } else {
       stop("could not install plyr")
+    }
+  }
+  
+  ##################### clue ######
+  if(require("clue")){
+    print("clue is loaded correctly")
+  } else {
+    print("trying to install clue")
+    install.packages("clue")
+    if(require("clue")){
+      print("clue installed and loaded")
+    } else {
+      stop("could not install clue")
     }
   }
   

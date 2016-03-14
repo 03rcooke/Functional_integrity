@@ -4,7 +4,7 @@ getwd()
 # remove all current objects in environment
 rm(list=ls())
 
-# load necessary packages: fossil, reshape2, data.table, FD, plyr
+# load necessary packages: fossil, reshape2, data.table, FD, plyr, clue
 
 ##################### fossil ######
 if(require("fossil")){
@@ -68,6 +68,19 @@ if(require("plyr")){
     print("plyr installed and loaded")
   } else {
     stop("could not install plyr")
+  }
+}
+
+##################### clue ######
+if(require("clue")){
+  print("clue is loaded correctly")
+} else {
+  print("trying to install clue")
+  install.packages("clue")
+  if(require("clue")){
+    print("clue installed and loaded")
+  } else {
+    stop("could not install clue")
   }
 }
 
@@ -173,15 +186,34 @@ UK_CWM
 
 
 # plot multiple dengrograms of species based on effect traits
-dendro_a <- hclust(gd, method = "single")
-dendro_b <- hclust(gd, method = "complete")
-dendro_c <- hclust(gd, method = "ward")
-dendro_d <- hclust(gd, method = "average") # UPGMA
-dendro_e <- hclust(gd, method = "mcquitty") # WPGMA
-dendro_f <- hclust(gd, method = "median") # WPGMC
-dendro_g <- hclust(gd, method = "centroid") # UPGMC
+hclust_methods <- c("ward.D", "ward.D2", "single", "complete", "average", "mcquitty")
+# average = UPGMA, mcquitty = WPGMA
+# omitted UPGMC and WPGMC methods because they are not appropriate for non-metric distances (Lefcheck et al., 2014)
+hclust_results <- lapply(hclust_methods, function(m) hclust(gd, m))
+names(hclust_results) <- hclust_methods
 
-plot(dendro, main = "Cluster dengrogram based on effect traits", cex = 0.8)
+plot(hclust_results$ward.D)
+
+dendro_con <- cl_consensus(hclust_results)
+plot(dendro_con)
+
+# co-phenetic correlations
+co_0 <- gd
+co_cor <- lapply(hclust_results, function(m) cophenetic(m))
+cpc <- lapply(co_cor, function(m) cor(co_0, m))
+# add consensus method
+con_cophe <- cophenetic(dendro_con)
+cor_con <- cor(co_0, con_cophe)
+all_cpc <- c(cpc, consensus = cor_con)
+
+all_cpc2 <- all_cpc[order(unlist(all_cpc), decreasing = TRUE)]
+barplot(unlist(all_cpc2), xlab = "Linkage function", ylab = "Co-phenetic correlation")
+
+
+# dendrogram with highest co-phenetic correlation
+t <- all_cpc2[1] # already ordered by correlation
+x <- names(t)
+plot(hclust_results[[x]], main = "Functional dengrogram (based on effect traits) \n with the highest co-phenetic correlation", xlab = "method = ", cex = 0.8)
 
 # find number of groups and return species assignation to groups
 egroup <- cutree(dendro, k = 8)

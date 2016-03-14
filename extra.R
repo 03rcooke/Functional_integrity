@@ -80,3 +80,13 @@ UK_trait$diet <- ordered(UK_trait$diet) ; UK_trait$habitat <- ordered(UK_trait$h
 
 if (e >= 0) print(paste("number of ecoregions assessed =", e[1]))
 # print number of ecoregions assessed
+
+
+
+
+dendro_a <- hclust(gd, method = "single")
+dendro_b <- hclust(gd, method = "complete")
+dendro_c <- hclust(gd, method = "ward.D")
+dendro_d <- hclust(gd, method = "ward.D2")
+dendro_e <- hclust(gd, method = "average") # UPGMA
+dendro_f <- hclust(gd, method = "mcquitty") # WPGMA
