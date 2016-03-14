@@ -131,9 +131,14 @@ FUN <- function(site, trait, plot_dendro, spp_list)
   # Community-weighted means
   UK_CWM <- functcomp(trait, UK$site) # CWM.type = "all" if I want frequencies of each ordinal class
   
-  # plot dengrogram of species based on effect traits
-  dendro <- hclust(gd, method = "average")
-
+  # plot multiple dengrograms of species based on effect traits
+  dendro_a <- hclust(gd, method = "single")
+  dendro_b <- hclust(gd, method = "complete")
+  dendro_c <- hclust(gd, method = "ward")
+  dendro_d <- hclust(gd, method = "average") # UPGMA
+  dendro_e <- hclust(gd, method = "mcquitty") # WPGMA
+  dendro_f <- hclust(gd, method = "median") # WPGMC
+  dendro_g <- hclust(gd, method = "centroid") # UPGMC
   
   
   # find number of groups and return species assignation to groups

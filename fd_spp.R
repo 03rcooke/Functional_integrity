@@ -172,9 +172,15 @@ UK_CWM
 
 
 
+# plot multiple dengrograms of species based on effect traits
+dendro_a <- hclust(gd, method = "single")
+dendro_b <- hclust(gd, method = "complete")
+dendro_c <- hclust(gd, method = "ward")
+dendro_d <- hclust(gd, method = "average") # UPGMA
+dendro_e <- hclust(gd, method = "mcquitty") # WPGMA
+dendro_f <- hclust(gd, method = "median") # WPGMC
+dendro_g <- hclust(gd, method = "centroid") # UPGMC
 
-# plot dengrogram of species based on effect traits
-dendro <- hclust(gd, method = "average")
 plot(dendro, main = "Cluster dengrogram based on effect traits", cex = 0.8)
 
 # find number of groups and return species assignation to groups
