@@ -2,83 +2,8 @@ FUN <- function(site, trait, plot_dendro, spp_list)
 {
   # load necessary packages: fossil, reshape2, data.table, FD, plyr, clue
   
-  ##################### fossil ######
-  if(require("fossil")){
-    print("fossil is loaded correctly")
-  } else {
-    print("trying to install fossil")
-    install.packages("fossil")
-    if(require("fossil")){
-      print("fossil installed and loaded")
-    } else {
-      stop("could not install fossil")
-    }
-  }
-  
-  ##################### reshape2 ######
-  if(require("reshape2")){
-    print("reshape2 is loaded correctly")
-  } else {
-    print("trying to install reshape2")
-    install.packages("reshape2")
-    if(require("reshape2")){
-      print("reshape2 installed and loaded")
-    } else {
-      stop("could not install reshape2")
-    }
-  }
-  
-  ##################### data.table ######
-  if(require("data.table")){
-    print("data.table is loaded correctly")
-  } else {
-    print("trying to install data.table")
-    install.packages("data.table")
-    if(require("data.table")){
-      print("data.table installed and loaded")
-    } else {
-      stop("could not install data.table")
-    }
-  }
-  
-  ##################### FD ######
-  if(require("FD")){
-    print("FD is loaded correctly")
-  } else {
-    print("trying to install FD")
-    install.packages("FD")
-    if(require("FD")){
-      print("FD installed and loaded")
-    } else {
-      stop("could not install FD")
-    }
-  }
-  
-  ##################### plyr ######
-  if(require("plyr")){
-    print("plyr is loaded correctly")
-  } else {
-    print("trying to install plyr")
-    install.packages("plyr")
-    if(require("plyr")){
-      print("plyr installed and loaded")
-    } else {
-      stop("could not install plyr")
-    }
-  }
-  
-  ##################### clue ######
-  if(require("clue")){
-    print("clue is loaded correctly")
-  } else {
-    print("trying to install clue")
-    install.packages("clue")
-    if(require("clue")){
-      print("clue installed and loaded")
-    } else {
-      stop("could not install clue")
-    }
-  }
+  if (!require("pacman")) install.packages("pacman")
+  pacman::p_load(fossil, reshape2, data.table, FD, plyr, clue)
   
   #### set up SITE data ###
   
