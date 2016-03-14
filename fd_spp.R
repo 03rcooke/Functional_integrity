@@ -211,6 +211,7 @@ barplot(unlist(all_cpc2), xlab = "Linkage function", ylab = "Co-phenetic correla
 
 
 # dendrogram with highest co-phenetic correlation
+# NEED TO ADD IF LOOP TO CHECK IF ITS THE CONSENSUS DENDROGRAM
 t <- all_cpc2[1] # already ordered by correlation
 x <- names(t)
 plot(hclust_results[[x]], main = "Functional dengrogram (based on effect traits) \n with the highest co-phenetic correlation", xlab = "method = ", cex = 0.8)
