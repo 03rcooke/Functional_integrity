@@ -90,3 +90,25 @@ dendro_c <- hclust(gd, method = "ward.D")
 dendro_d <- hclust(gd, method = "ward.D2")
 dendro_e <- hclust(gd, method = "average") # UPGMA
 dendro_f <- hclust(gd, method = "mcquitty") # WPGMA
+
+
+#FRed3 <- cbind(site, rep(gr2, p), FRed2); names(FRed3) <- c("site","group","nbsp")
+#FRed <- FRed3[order(FRed3$site),]
+
+#e_gr_fac <- factor(e_gr)
+#nbsp_e_gr <- tapply(e_gr_fac, e_gr_fac, length)
+
+dbUK <- dbFD(UK$trait, UK$site, corr = , m = "min") # need a m argument to get it to run
+dbUK <- dbFD(UK$trait, UK$site, corr = "cailliez", calc.FRic = FALSE) # need FRic to be false to get it to run
+
+#dbUK <- dbFD(UK$trait, UK$site, corr = "cailliez") # try running this on remote desktop
+
+# Functional dispersion
+
+UK_dis <- fdisp(gd, UK$site)
+UK_dis$FDis
+
+# Community-weighted means
+
+UK_CWM <- functcomp(UK$trait, UK$site) # CWM.type = "all" if I want frequencies of each ordinal class
+UK_CWM

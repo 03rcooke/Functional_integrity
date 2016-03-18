@@ -4,10 +4,18 @@ getwd()
 # remove all current objects in environment
 rm(list=ls())
 
-# load necessary packages: fossil, reshape2, data.table, FD, plyr, clue
+# load necessary packages: fossil, data.table, FD, clue, dplyr, qpcR, stats, cowplot
+# fossil makes matrix
+# data.table used to make data.tables for range areas
+# FD calculates fucntional indices and gower dissimilarity
+# clue used to process dendrograms and clusters
+# dplyr used ...
+# qpcR calculates RMSE
+# stats used for cophenetic distances
+# cowplot for plots
 
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(fossil, reshape2, data.table, FD, plyr, clue)
+pacman::p_load(fossil, data.table, FD, clue, dplyr, qpcR, stats, cowplot)
 
 ##### setting up data sheets ####
 
@@ -89,67 +97,139 @@ if (e >= 0) print(paste("number of ecoregions assessed =", e[1]))
 UK <- list(UK_trait, UK_site) ; names(UK) <- c("trait","site")
 
 # calculate species x species distance matrix based on effect traits
-gd <- gowdis(UK$trait)
+gd <- gowdis(UK$trait, ord = c("podani"))
+# applied the Podani 1999 correction to account for ordered traits (Lefcheck et al., 2014)
 
-
-dbUK <- dbFD(UK$trait, UK$site, corr = "cailliez", m = "min") # need a m argument to get it to run
-dbUK <- dbFD(UK$trait, UK$site, corr = "cailliez", calc.FRic = FALSE) # need FRic to be false to get it to run
-
-#dbUK <- dbFD(UK$trait, UK$site, corr = "cailliez") # try running this on remote desktop
-
-# Functional dispersion
-
-UK_dis <- fdisp(gd, UK$site)
-UK_dis$FDis
-
-# Community-weighted means
-
-UK_CWM <- functcomp(UK$trait, UK$site) # CWM.type = "all" if I want frequencies of each ordinal class
-UK_CWM
-
-
-
-
-# plot multiple dengrograms of species based on effect traits
+######### Plot multiple dengrograms of species based on effect traits #########
 hclust_methods <- c("ward.D", "ward.D2", "single", "complete", "average", "mcquitty")
 # average = UPGMA, mcquitty = WPGMA
-# omitted UPGMC and WPGMC methods because they are not appropriate for non-metric distances (Lefcheck et al., 2014)
+# omitted UPGMC and WPGMC methods because they are not appropriate 
+# for non-metric distances (Lefcheck et al., 2014)
 hclust_results <- lapply(hclust_methods, function(m) hclust(gd, m))
 names(hclust_results) <- hclust_methods
 
-plot(hclust_results$ward.D)
-
 dendro_con <- cl_consensus(hclust_results)
-plot(dendro_con)
 
-# co-phenetic correlations
-co_0 <- gd
+######## Testing the performance of different clustering algorithms
+
+######### co-phenetic correlations: similarities (Kreft & Jetz, 2010) ###############
+
 co_cor <- lapply(hclust_results, function(m) cophenetic(m))
-cpc <- lapply(co_cor, function(m) cor(co_0, m))
+# cophenetic function - stats package
+cpc <- lapply(co_cor, function(m) cor(gd, m))
 # add consensus method
 con_cophe <- cophenetic(dendro_con)
-cor_con <- cor(co_0, con_cophe)
+cor_con <- cor(gd, con_cophe)
 all_cpc <- c(cpc, consensus = cor_con)
-
 all_cpc2 <- all_cpc[order(unlist(all_cpc), decreasing = TRUE)]
-barplot(unlist(all_cpc2), xlab = "Linkage function", ylab = "Co-phenetic correlation")
 
+barplot(unlist(all_cpc2), ylim = c(0,(unlist(all_cpc2[[1]])+0.2*unlist(all_cpc2[[1]]))), xlab = "Linkage function", ylab = "Co-phenetic correlation")
+# just adjust 0.2 to change scaling of y acis
 
 # dendrogram with highest co-phenetic correlation
-# NEED TO ADD IF LOOP TO CHECK IF ITS THE CONSENSUS DENDROGRAM
 t <- all_cpc2[1] # already ordered by correlation
 x <- names(t)
-plot(hclust_results[[x]], main = "Functional dengrogram (based on effect traits) \n with the highest co-phenetic correlation", xlab = "method = ", cex = 0.8)
+if (is.null(hclust_results[[x]])){
+  plot(dendro_con, hang = -1, main = "Functional dengrogram (based on effect traits) \n with the highest co-phenetic correlation", xlab = "method = consensus", cex = 0.8)
+} else {
+  plot(hclust_results[[x]], hang = -1, main = "Functional dengrogram (based on effect traits) \n with the highest co-phenetic correlation", xlab = "method = ", cex = 0.8)
+}
+# hang = -1 puts all species lables on same level
+
+########## matrix 2-norm: dissimilarities (Lefcheck et al., 2014) ##########
+
+ud <- lapply(hclust_results, function(m) cl_ultrametric(m)) 
+# ultrametric function - clue package
+ultra <- lapply(ud, function(x) cl_dissimilarity(x, gd, method = "spectral"))
+# add consensus method
+con_ultra <- cl_dissimilarity(dendro_con, gd, method = "spectral")
+all_ultra <- c(ultra, consensus = con_ultra)
+all_ultra2 <- all_ultra[order(unlist(all_ultra), decreasing = FALSE)]
+
+barplot(1/unlist(all_ultra2), ylim = c(0,(1/unlist(all_ultra2[[1]])+0.1*1/unlist(all_ultra2[[1]]))), xlab = "Linkage function", ylab = "1/spectral norm (2-norm) dissimilarities")
+# just adjust 0.1 to change scaling of y axis
+
+# dendrogram with lowest 2-norm value
+u <- all_ultra2[1] # already ordered
+v <- names(u)
+if (is.null(hclust_results[[v]])){
+  plot(dendro_con, hang = -1, main = "Functional dengrogram (based on effect traits) \n with the lowest (2-norm) dissimilarity", xlab = "method = consensus", cex = 0.8)
+} else {
+  plot(hclust_results[[v]], hang = -1, main = "Functional dengrogram (based on effect traits) \n with the lowest (2-norm) dissimilarity", xlab = "method = ", cex = 0.8)
+}
+# hang = -1 puts all species lables on same level
+
+####### Quantifying the number of clusters (k) ############
+
+###### L method (Salvador & Chan, 2004)
+mer <- sort(hclust_results[[1]]$height, decreasing = TRUE)
+# merge heights of clusters
+mer2 <- data.frame(c(NA, mer), 1:(length(hclust_results[[1]]$height)+1)); names(mer2) <- c("h","k")
+# combine merge heights and number of clusters
+
+b <- max(mer2$k) # n = b-1
+c <- seq(from = 3, to = b-2, by = 1)
+
+xl <- lapply(c, function(c) seq(from = min(c), to = max(c), by = 1))
+xr <- lapply(c, function(c) seq(from = (min(c+1)), to = max((c+1)), by = 1))
+
+lc <- lapply(xl, function(xl) do.call("lm",list(h ~ k, data = quote(mer2), subset = 2:xl)))
+rc <- lapply(xr, function(xr) do.call("lm",list(h ~ k, data = quote(mer2), subset = xr:b)))
+
+RMSEl <- lapply(lc, function(lc) RMSE(lc))
+RMSEr <- lapply(rc, function(rc) RMSE(rc))
+
+rmsed <- data.frame(unlist(RMSEl), unlist(RMSEr), c, rep(b, length(RMSEl))); names(rmsed) <- c("RMSEl", "RMSEr", "c", "b")
+rmsed <- mutate(rmsed, RMSEc = c-1/b-1*RMSEl + b-c/b-1*RMSEr) ## equation Salvador & Chan: RMSEc = c-1/b-1*RMSEl + b-c/b-1*RMSEr
+min_rmsed <- filter(rmsed, RMSEc == min(RMSEc))
+c_ <- min_rmsed$c
+row_c <- which(rmsed$c == c_)
+
+plot(mer2$k, mer2$h, xlab = "Number of clusters", ylab = "Merging height", main = "Evaluation plot")
+abline(lc[[row_c]])
+abline(rc[[row_c]])
+
+ggplot(data = mer2, aes(k, h)) + # sets up plot
+  geom_point(size = 2.5, shape = 16) + # adds points
+  labs(title = "Evaluation plot", x = "Number of clusters", y = "Merging height") + # adds axis titles and main title
+  geom_vline(aes(xintercept = c_)) + # adds vertical line at c_
+  annotate("text", x = 0.5*b, y = 0.7*max(mer2$h, na.rm = TRUE), label = paste("RMSE(min): k =", c_), size = 6) + # adds text to centre of plot
+  theme(axis.text.y = element_text(size=15), # changes size of axis labels
+        axis.text.x = element_text(size=15), # changes size of axis labels
+        axis.title.x = element_text(size=17), # changes size of axis title
+        axis.title.y = element_text(size=17), # changes size of axis title
+        plot.title = element_text(size = 20)) # changes size of main title
+
+################ Functional redundancy & Functional dispersion ##################
 
 # find number of groups and return species assignation to groups
-egroup <- cutree(dendro, k = 8)
+e_gr <- cutree(hclust_results[[v]], k = c_)
 
 # p = number of plots
 p <- nrow(UK$site)
 
-# gr = number of effect groups
-gr <- length(unique(egroup))
+# c_ = number of effect groups
+gr = c_
 
+gr2 <- unique(e_gr)
+gr3 <- gr2[order(gr2)]
+t2 <- rep(p,gr)
+e_group <- rep(gr3, t2)
+site <- rep(row.names(UK$site), gr)
 
+e_gr1 <- rep(e_gr, p)
+e_gr_m <- matrix(e_gr1, p, length(e_gr), byrow = T, dimnames = list(rownames(UK$site), colnames(UK$site)))
+mats <- list()
+FRed1 <- data.frame()
+for (i in 1:gr){
+  t <- ifelse(e_gr_m == i, 1, 0)
+  mats[[i]] <- t * UK$site
+  FRed1 <- rbind(FRed1, mats[[i]])
+}
 
+FRed <- FRed1 %>% transmute(nbsp_gr = rowSums(FRed1)) # sum number of species per ecoregion per group
+
+results <- dbFD(UK$trait, UK$site, corr = "cailliez", calc.FRic = FALSE, calc.FDiv = FALSE)
+results2 <- data.frame(site, e_group, FRed$nbsp, results$FDis); names(results2) <- c("site", "group", "FRed", "FDis")
+res <- results2[order(results2$site),]; row.names(res) <- NULL
 

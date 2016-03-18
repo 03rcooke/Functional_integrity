@@ -61,7 +61,8 @@ FUN <- function(site, trait, plot_dendro, spp_list)
   UK <- list(trait, site_m) ; names(UK) <- c("trait","site")
   
   # calculate species x species distance matrix based on effect traits
-  gd <- gowdis(UK$trait)
+  gd <- gowdis(UK$trait, ord = c("podani"))
+  # applied the Podani 1999 correction to account for ordered traits (Lefcheck et al., 2014)
   
   # Functional dispersion
   UK_dis <- fdisp(gd, UK$site) 
