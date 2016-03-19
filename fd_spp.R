@@ -1,8 +1,8 @@
 # check working directory
-getwd()
+#getwd()
 
 # remove all current objects in environment
-rm(list=ls())
+#rm(list=ls())
 
 # load necessary packages: fossil, data.table, FD, clue, dplyr, qpcR, stats, cowplot
 # fossil makes matrix
@@ -15,7 +15,7 @@ rm(list=ls())
 # cowplot for plots
 
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(fossil, data.table, FD, clue, dplyr, qpcR, stats, cowplot)
+pacman::p_load(fossil, data.table, FD, clue, dplyr, qpcR, stats, cowplot, ggdendro)
 
 ##### setting up data sheets ####
 
@@ -232,4 +232,7 @@ FRed <- FRed1 %>% transmute(nbsp_gr = rowSums(FRed1)) # sum number of species pe
 results <- dbFD(UK$trait, UK$site, corr = "cailliez", calc.FRic = FALSE, calc.FDiv = FALSE)
 results2 <- data.frame(site, e_group, FRed$nbsp, results$FDis); names(results2) <- c("site", "group", "FRed", "FDis")
 res <- results2[order(results2$site),]; row.names(res) <- NULL
+
+# Community-weighted means
+UK_CWM <- functcomp(UK$trait, UK$site) # CWM.type = "all" if I want frequencies of each ordinal class
 
