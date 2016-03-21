@@ -235,4 +235,4 @@ res <- results2[order(results2$site),]; row.names(res) <- NULL
 
 # Community-weighted means
 UK_CWM <- functcomp(UK$trait, UK$site) # CWM.type = "all" if I want frequencies of each ordinal class
-
+  

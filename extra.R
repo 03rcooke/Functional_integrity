@@ -112,3 +112,33 @@ UK_dis$FDis
 
 UK_CWM <- functcomp(UK$trait, UK$site) # CWM.type = "all" if I want frequencies of each ordinal class
 UK_CWM
+
+
+
+dendro_plot <- ggplot(dend$segments) + # sets up plot
+  geom_segment(aes(x = x, y = y, xend = xend, yend = yend)) + # adds heights of branchs
+  ylab("") + # remove label for y axis
+  coord_flip() + # make dendrogram horizontal
+  scale_y_reverse(expand = c(0, 0), breaks = seq(0, 1, by = 0.2)) + # reverse scale so that 0 is on the right
+  theme(axis.title.y=element_blank(), axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(), axis.line.y=element_blank(),
+        plot.margin = unit(c(1,7,1,1), "lines"), axis.ticks.length = unit(0.5, "lines")) # remove y axis information
+
+dp <- dendro_plot + geom_text(data = dend$labels, aes(x, y, label = label),
+                              hjust = 0, size = 4)
+
+# Code to override clipping
+gt <- ggplot_gtable(ggplot_build(dp))
+gt$layout$clip[gt$layout$name=="panel"] <- "off"
+grid.draw(gt)
+
+########## matrix 2-norm: dissimilarities (Lefcheck et al., 2014) ############
+ud <- lapply(hclust_results, function(m) cl_ultrametric(as.hclust(m)))
+# convert dendrograms to ultrametric
+
+dendro_en <- cl_ensemble(list = ud)
+class(dendro_en)
+dendro_con <- cl_consensus(dendro_en)
+
+rownames(uld)[which(rownames(uld)=="average")]= "UPGMA"; rownames(uld)[which(rownames(uld)=="mcquitty")]= "WPGMA"; rownames(uld)[which(rownames(uld)=="single")]= "Single"; rownames(uld)[which(rownames(uld)=="complete")]= "Complete"; rownames(uld)[which(rownames(uld)=="consensus")]= "Consensus"; rownames(uld)[which(rownames(ul)=="ward.D2")]= "Ward D2"; rownames(ul)[which(rownames(ul)=="ward.D")]= "Ward D"
+

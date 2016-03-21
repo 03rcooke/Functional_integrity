@@ -1,18 +1,22 @@
-FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE) 
+FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE, tree = FALSE) 
 {
   # load necessary packages: fossil, data.table, FD, clue, dplyr, qpcR, stats, cowplot
-  # fossil makes matrix
-  # data.table used to make data.tables for range areas
-  # FD calculates fucntional indices and gower dissimilarity
-  # clue used to process dendrograms and clusters
-  # dplyr used ...
-  # qpcR calculates RMSE
-  # stats used for cophenetic distances
-  # cowplot used to simplify ggplots
-  # ggdendro for functional dendrograms
-  
+
   if (!require("pacman")) install.packages("pacman")
-  pacman::p_load(fossil, data.table, FD, clue, dplyr, qpcR, stats, cowplot, ggdendro)
+  pacman::p_load(fossil, data.table, FD, clue, dplyr, qpcR, stats, cowplot, ggdendro, ape, dendextend, methods)
+  
+  # fossil: used to create matrices # calls: create.matrix
+  # data.table: used to make data.tables for range areas # calls: as.data.table
+  # FD: calculates functional indices and gower dissimilarity # calls: gowdis, fdisp, functcomp
+  # clue: used to process dendrograms and clusters # calls: cl_ensemble, cl_consensus, cl_ultrametric, cl_dissimilarity
+  # dplyr: used to calculate across rows # calls: mutate, filter, transmute
+  # qpcR: used to calculate RMSE # calls: RMSE
+  # stats: used for clustering # calls: hclust, as.dendrogram
+  # cowplot: simplify ggplots # calls: ggplot, plot_grid
+  # ggdendro: for functional dendrograms # calls: dendro_data
+  # ape: used to write trees in Newick format # calls: write.tree
+  # dendextend: used to cut a non-hclust dendrogram # calls: cutree
+  # methods: used to create slots in output # calls: setClass
   
   #### set up data ###
   
@@ -26,7 +30,7 @@ FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE)
   Species <- with(Species, Species[order(binomial),]) # reorder by name of species
   
   # create speciesxsite matrix
-  site_m <- create.matrix(site, tax.name="binomial", locality="eco_code") # uses fossil package
+  site_m <- create.matrix(site, tax.name="binomial", locality="eco_code")
   site_m <- t(site_m) # transpose
   
   ### set up TRAITS data ##
@@ -73,38 +77,51 @@ FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE)
   gd <- gowdis(UK$trait, ord = c("podani"))
   # applied the Podani 1999 correction to account for ordered traits (Lefcheck et al., 2014)
   
+  ###############################################################################
   ######### Plot multiple dengrograms of species based on effect traits #########
+  ###############################################################################
+  
   hclust_methods <- c("ward.D", "ward.D2", "single", "complete", "average", "mcquitty")
   # average = UPGMA, mcquitty = WPGMA
-  # omitted UPGMC and WPGMC methods because they are not appropriate 
-  # for non-metric distances (Lefcheck et al., 2014)
-  hclust_results <- lapply(hclust_methods, function(m) hclust(gd, m))
+  # omitted UPGMC and WPGMC methods because they are not appropriate for non-metric distances (Lefcheck et al., 2014)
+  hclust_results <- lapply(hclust_methods, function(m) hclust(gd, method = m))
   names(hclust_results) <- hclust_methods
   
-  dendro_con <- cl_consensus(hclust_results)
+  ######## Testing the performance of different clustering algorithms ##########
   
-  ######## Testing the performance of different clustering algorithms
+  ########## matrix 2-norm: dissimilarities (Lefcheck et al., 2014) ############
+  ud <- lapply(hclust_results, function(m) cl_ultrametric(m))
+  # convert dendrograms to ultrametric
   
-  ########## matrix 2-norm: dissimilarities (Lefcheck et al., 2014) ##########
+  dendro_en <- cl_ensemble(list = hclust_results)
+  class(dendro_en)
+  dendro_con <- cl_consensus(dendro_en)
+  # build consensus dendrogram
   
-  ud <- lapply(hclust_results, function(m) cl_ultrametric(m)) 
-  # ultrametric function - clue package
-  ultra <- lapply(ud, function(x) cl_dissimilarity(x, gd, method = "spectral"))
-  # add consensus method
-  con_ultra <- cl_dissimilarity(dendro_con, gd, method = "spectral")
-  all_ultra <- c(ultra, consensus = con_ultra)
-  all_ultra2 <- all_ultra[order(unlist(all_ultra), decreasing = FALSE)]
+  all_ultra <- c(ud, dendro_con[1]); names(all_ultra) <- c(hclust_methods, "consensus")
+  (ul <- lapply(all_ultra, function(x) cl_dissimilarity(x, gd, method = "spectral")))
+  # calculate dissimilarity values
   
+  ul2 <- do.call(rbind, ul)
+  min_dendro <- which.min(ul2); names(all_ultra)[min_dendro]
   # dendrogram with lowest 2-norm value
-  u <- all_ultra2[1] # already ordered
-  v <- names(u)
+  v <- names(all_ultra)[min_dendro]
+  # name of dendrogram with lowest 2-norm value
+  min_dist <- all_ultra[names(all_ultra) == v][[1]]
+  # distance matrix for dendrogram with lowest 2-norm value
+  
+  min_dist <- min_dist/max(min_dist)
+  # scale between 0-1
+  
+  dend <- dendro_data(as.dendrogram(min_dist), type = "rectangle")
+  # extract cluster data from min_dist dendrogram
   
   ####### Quantifying the number of clusters (k) ############
   
   ###### L method (Salvador & Chan, 2004)
-  mer <- sort(hclust_results[[1]]$height, decreasing = TRUE)
+  mer <- sort(unique(dend$segment[,"y"]), decreasing = TRUE)
   # merge heights of clusters
-  mer2 <- data.frame(c(NA, mer), 1:(length(hclust_results[[1]]$height)+1)); names(mer2) <- c("h","k")
+  mer2 <- data.frame(c(NA, mer), 1:(length(mer)+1)); names(mer2) <- c("h","k")
   # combine merge heights and number of clusters
   
   b <- max(mer2$k) # n = b-1
@@ -123,12 +140,11 @@ FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE)
   rmsed <- mutate(rmsed, RMSEc = c-1/b-1*RMSEl + b-c/b-1*RMSEr) ## equation Salvador & Chan: RMSEc = c-1/b-1*RMSEl + b-c/b-1*RMSEr
   min_rmsed <- filter(rmsed, RMSEc == min(RMSEc))
   c_ <- min_rmsed$c
-  row_c <- which(rmsed$c == c_) # what's this used for?
   
   ################ Functional redundancy ##################
   
   # find number of groups and return species assignation to groups
-  e_gr <- cutree(hclust_results[[v]], k = c_)
+  e_gr <- cutree(as.dendrogram(min_dist), k = c_)
   
   # p = number of plots
   p <- nrow(UK$site)
@@ -160,70 +176,86 @@ FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE)
   FD <- fdisp(gd, UK$site)
   
 ########### Community-weighted means ############
-  CWM <- functcomp(UK$trait, UK$site) # CWM.type = "all" if I want frequencies of each ordinal class
+  CWM <- functcomp(UK$trait, UK$site) # CWM.type = "all" if frequencies of each ordinal class needed
   
 ########### Outputs and Plots ################
   if (spp_list == TRUE)
     cat(write.csv(Species, file = "Species_list.csv", row.names=FALSE)) # export species list as .csv
   
-    if (is.null(hclust_results[[v]])){
-          
-      
-      plot(dendro_con, hang = -1, main = "Functional dengrogram (based on effect traits) \n with the lowest (2-norm) dissimilarity", xlab = "method = consensus", cex = 0.8)
-      
-      dendro_con <- as.dendrogram(dendro_con$.Data)
-      ggdendrogram(as.dendrogram(dendro_con), leaf_labels = TRUE, size = 2) +
-        theme_dendro()
-      
-      } else {
-          plot(hclust_results[[v]], hang = -1, main = "Functional dengrogram (based on effect traits) \n with the lowest (2-norm) dissimilarity", xlab = "method = ", cex = 0.8)
-    
-        dend <- dendro_data(hclust_results[[v]], type = "rectangle")
-        ggplot(dend$segments) + 
-          geom_segment(aes(x = x, y = y, xend = xend, yend = yend)) +
-          geom_text(data = dend$labels, aes(x, y, label = label),
-                    hjust = 1, angle = 90, size = 3) +
-          theme(axis.line.x=element_blank(),
-                axis.ticks.x=element_blank(),
-                axis.text.x=element_blank(),
-                axis.title.x=element_blank(),
-                panel.background=element_rect(fill="white"),
-                panel.grid=element_blank())
-        }
+  ###### write newick tree
+  if (tree == TRUE)
+  write.tree(as.phylo(as.dendrogram(min_dist)),"Functional_dendrogram.new")
   
-    eval <- ggplot(data = mer2, aes(k, h)) + # sets up plot
-              geom_point(size = 2.5, shape = 16) + # adds points
-              labs(title = "Evaluation plot", x = "Number of clusters", y = "Merging height") + # adds axis titles and main title
-              geom_vline(aes(xintercept = c_)) + # adds vertical line at c_
-              annotate("text", x = 0.5*b, y = 0.7*max(mer2$h, na.rm = TRUE), label = paste("RMSE(min): k =", c_), size = 6) + # adds text to centre of plot
-              theme(axis.text.y = element_text(size=15), # changes size of axis labels
-                    axis.text.x = element_text(size=15), # changes size of axis labels
-                    axis.title.x = element_text(size=17), # changes size of axis title
-                    axis.title.y = element_text(size=17), # changes size of axis title
-                    plot.title = element_text(size = 20)) # changes size of main title
+  ###### Plot: performance of clustering algorithms
+  uld <- data.frame(unlist(ul)); names(uld) <- c("ultra"); rownames(uld)[which(rownames(uld)=="average")]= "UPGMA"; rownames(uld)[which(rownames(uld)=="mcquitty")]= "WPGMA"; rownames(uld)[which(rownames(uld)=="single")]= "Single"; rownames(uld)[which(rownames(uld)=="complete")]= "Complete"; rownames(uld)[which(rownames(uld)=="consensus")]= "Consensus"; rownames(uld)[which(rownames(uld)=="ward.D2")]= "Ward D2"; rownames(uld)[which(rownames(uld)=="ward.D")]= "Ward D"
+  uld <- uld[order(uld$ultra), , drop = FALSE] # reorder data frame by increasing dissimilarity
+  clus <- ggplot(data = uld, aes(x = row.names(uld), y = 1/ultra)) +
+    geom_bar(stat = "identity", fill = "grey") + # adds bars
+    scale_x_discrete(limits = row.names(uld)) + # maintains order of row names in ul data frame
+    labs(title = "Performance of clustering algorithms", x = "Linkage function", y = "Spectral norm (2-norm) similarities") + # adds axis titles and main title
+    theme(axis.text.y = element_text(size=15), # changes size of axis labels
+          axis.text.x = element_text(size=15), # changes size of axis labels
+          axis.title.x = element_text(size=17), # changes size of axis title
+          axis.title.y = element_text(size=17), # changes size of axis title
+          plot.title = element_text(size = 20)) # changes size of main title
   
-    ul <- data.frame(unlist(all_ultra2)); names(ul) <- c("ultra"); rownames(ul)[which(rownames(ul)=="average")]= "UPGMA"; rownames(ul)[which(rownames(ul)=="mcquitty")]= "WPGMA"; rownames(ul)[which(rownames(ul)=="single")]= "Single"; rownames(ul)[which(rownames(ul)=="complete")]= "Complete"; rownames(ul)[which(rownames(ul)=="consensus")]= "Consensus"; rownames(ul)[which(rownames(ul)=="ward.D2")]= "Ward D2"; rownames(ul)[which(rownames(ul)=="ward.D")]= "Ward D"
-    clus <- ggplot(data = ul, aes(x = row.names(ul), y = 1/ultra)) +
-        geom_bar(stat = "identity", fill = "darkblue") + # adds bars
-        scale_x_discrete(limits = row.names(ul)) + # maintains order of row names in ul data frame
-        labs(title = "Performance of clustering algorithms", x = "Linkage function", y = "Spectral norm (2-norm) similarities") + # adds axis titles and main title
-        theme(axis.text.y = element_text(size=15), # changes size of axis labels
-              axis.text.x = element_text(size=15), # changes size of axis labels
-              axis.title.x = element_text(size=17), # changes size of axis title
-              axis.title.y = element_text(size=17), # changes size of axis title
-              plot.title = element_text(size = 20)) # changes size of main title
+  ###### Plot: Evaluation plot
+  eval <- ggplot(data = mer2, aes(k, h)) + # sets up plot
+    geom_point(size = 2.5, shape = 16) + # adds points
+    labs(title = "Evaluation plot", x = "Number of clusters", y = "Merging height") + # adds axis titles and main title
+    geom_vline(aes(xintercept = c_)) + # adds vertical line at c_
+    annotate("text", x = 0.5*b, y = 0.7*max(mer2$h, na.rm = TRUE), label = paste("RMSE(min): k =", c_), size = 6) + # adds text to centre of plot
+    scale_y_continuous(breaks = seq(0, 1, by = 0.2)) +
+    theme(axis.text.y = element_text(size=15), # changes size of axis labels
+          axis.text.x = element_text(size=15), # changes size of axis labels
+          axis.title.x = element_text(size=17), # changes size of axis title
+          axis.title.y = element_text(size=17), # changes size of axis title
+          plot.title = element_text(size = 20)) # changes size of main title
   
-  plots <- c("dendro", "eval", "clus")
+  ###### Plot: Functional dendrogram
+  # Set up dendrogram
+  dendro_plot <- ggplot(dend$segments) + # sets up plot
+    geom_segment(aes(x = x, y = y, xend = xend, yend = yend)) + # adds heights of branchs
+    ylab("") + # remove label for y axis
+    coord_flip() + # make dendrogram horizontal
+    scale_y_reverse(expand = c(0,0), breaks = seq(0, 1, by = 0.2)) + # reverse scale so that 0 is on the right
+    theme(axis.title.y=element_blank(), axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(), axis.line.y=element_blank(),
+          axis.ticks.length = unit(0.5, "lines"),
+          plot.margin = unit(c(1,0,1,1), "lines")) # remove y axis information
   
-  result <- list(
+  # Add species labels separately to ensure axis is clipped to limits
+  dendro_text <- ggplot(dend$labels) +
+    scale_y_continuous(limits = c(0,1)) +
+    geom_text(data = dend$labels, aes(x = x, y = y, label = label),
+              hjust = 0, size = 4.5) + # adds species names
+    coord_flip() + # make dendrogram horizontal
+    theme(axis.title.y=element_blank(), axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(), axis.line.y=element_blank(),
+          axis.title.x=element_blank(), axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(), axis.line.x=element_blank(),
+          plot.margin = unit(c(1,1,1,0), "lines")) # remove y axis information
+  
+  # Combine dendrogram and text plots
+  dendro <- plot_grid(dendro_plot, dendro_text, align="h", rel_widths = c(3,1))
+  
+  stats <- list(
     ecoregions = e[1],
     spp_total = spp_total,
     spp_missing = spp_missing,
     spp_final = spp_final,
-    plots = plots,
-    CWM = CWM,
     k = c_,
+    CWM = CWM,
     FR = res,
     FD = FD$FDis)
+  
+  plots <- list(
+    clus = clus,
+    eval = eval,
+    dendro = dendro)
+  
+  result <- setClass("result", slots = c(stats = "list", plots = "list"))
+  result <- result(stats = stats, plots = plots)
+  
   return(result)
 } # end of FUN

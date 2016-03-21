@@ -10,19 +10,28 @@ UK_trait <- read.csv("Trait_data_UK.csv", row.names = 2,
                      col.names = c("id_no","binomial","activity","mass","diet","habitat","litter","longevity","terrestriality","trophic"))
 # assign simple names to variables
 
-out <- FUN(UK_data, UK_trait, corr = "cailliez", spp_list = FALSE)
+out <- FUN(UK_data, UK_trait, corr = "cailliez", spp_list = FALSE, tree = FALSE)
 
 out
 
-out$ecoregions # number of ecoregions assessed
-out$spp_total # total number of species per ecoregion (including species with missing trait data)
-out$spp_missing # number of missing data species per ecoregion
-out$spp_final # number of species per ecoregion after removing missing-data species
-out$CWM # community weighted mean
-out$k # number of functional clusters as specified by the L method (Salvador & Chan, 2004)
-out$FunctDisp # functional dispersion
+#### Statistics
+out@stats
 
-print(out$evaluation) # L method evaluation plot
+out@stats$ecoregions # number of ecoregions assessed
+out@stats$spp_total # total number of species per ecoregion (including species with missing trait data)
+out@stats$spp_missing # number of missing data species per ecoregion
+out@stats$spp_final # number of species per ecoregion after removing missing-data species
+out@stats$k # number of functional clusters as specified by the L method (Salvador & Chan, 2004)
+out@stats$CWM # community weighted mean
+out@stats$FR # functional redundancy
+out@stats$FD # functional dispersion
 
-# plot_dendro is the functional dendrogram
+#### Plots
+out@plots
+
+out@plots$clus # Performance of clustering algorithms
+out@plots$eval # L method evaluation plot
+out@plots$dendro # Functional dendrogram: following best clustering algorithm and number of clusters as determined by L method
+
 # spp_list is a .csv of all species in the dataset
+# tree is a Newick format functional dendrogram

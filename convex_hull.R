@@ -37,3 +37,39 @@ ggplot(ggdata) +
   stat_ellipse(aes(x=PC1,y=PC2,fill=factor(Cluster)),
                geom="polygon", level=0.95, alpha=0.2) +
   guides(color=guide_legend("Cluster"),fill=guide_legend("Cluster"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##################### Lefcheck ###################
+
+#Visualize species' differences in multivariate trait space
+#Perform k-means clustering with no a priori specification for k
+traits_k <- pamk(gd, krange = 2:10)
+#Perform multidimensional scaling on functional dendrogram
+traits_nmds <- metaMDS(gd, k = c_, trymax = 500)
+#Plot in two dimensions
+#par(mar=c(4,4,1,1))
+ordiplot(traits_nmds, type = "n")
+# Assign colors to different groups
+groups <- levels(factor(traits_k$pamobject$clustering))
+points.symbols=15:16
+points.colors=c("firebrick3","cornflowerblue")
+for(i in seq_along(groups)) {
+  points(traits_nmds$points[traits_k$pamobject$clustering==groups[i],],
+         pch=points.symbols[i],col=points.colors[i],cex=1.4) }
+ordispider(traits_nmds,factor(traits_k$pamobject$clustering),label=F)
+ordihull(traits_nmds,factor(traits_k$pamobject$clustering),lty="dotted")
+orditorp(traits_nmds,dis="sites",pcex=0,air=0.5,col="grey10",cex=0.8)
+
+
