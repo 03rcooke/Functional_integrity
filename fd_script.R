@@ -19,7 +19,7 @@ out@stats
 
 out@stats$ecoregions # number of ecoregions assessed
 out@stats$spp_total # total number of species per ecoregion (including species with missing trait data)
-out@stats$spp_missing # number of missing data species per ecoregion
+out@stats$spp_missing # number of species missing all trait data per ecoregion
 out@stats$spp_final # number of species per ecoregion after removing missing-data species
 out@stats$k # number of functional clusters as specified by the L method (Salvador & Chan, 2004)
 out@stats$CWM # community weighted mean
