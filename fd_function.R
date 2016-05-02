@@ -11,7 +11,7 @@ FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE, tree = FALSE)
   # clue: used to process dendrograms and clusters # calls: cl_ensemble, cl_consensus, cl_ultrametric, cl_dissimilarity
   # dplyr: used to calculate across rows # calls: mutate, filter, transmute
   # qpcR: used to calculate RMSE # calls: RMSE
-  # stats: used for clustering # calls: hclust, as.dendrogram
+  # stats: used for clustering and data handling # calls: hclust, as.dendrogram, aggregate
   # cowplot: simplify ggplots # calls: ggplot, plot_grid
   # ggdendro: for functional dendrograms # calls: dendro_data
   # ape: used to write trees in Newick format # calls: write.tree
@@ -24,6 +24,13 @@ FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE, tree = FALSE)
   UK_data_sum <- as.data.table(site[c(-3)])[, lapply(.SD, sum), by = list(id_no, binomial, eco_code)] # sum shape areas by species name and ecoregion
   UK_data_sum <- as.data.frame(UK_data_sum) # convert data table to data frame
   UK_data_sum <- with(UK_data_sum, UK_data_sum[order(binomial),]) # reorder by name of species
+  
+  # All mammals for presence = extant; origin = native, reintroduced
+  am12 <- read.csv("ALL_Mammals_1_2.csv")
+  am12_sum <- aggregate(shape_Area~binomial, am12, FUN=sum)
+  am12_merge <- merge(UK_data_sum, am12_sum, by.x = "binomial", by.y="binomial")
+  names(am12_merge) <- c("binomial", "id_no", "eco_code", "eco_spp_area", "total_spp_area")
+  am12 <- mutate(am12_merge, prop_spp_area = eco_spp_area/total_spp_area*100) # sum number of species per ecoregion per group
   
   # list of unique species
   Species <- unique(site[c("id_no", "binomial")])

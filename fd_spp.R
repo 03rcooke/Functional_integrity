@@ -33,6 +33,16 @@ UK_data_sum <- as.data.table(UK_data[c(-3)])[, lapply(.SD, sum), by = list(id_no
 UK_data_sum <- as.data.frame(UK_data_sum) # convert data table to data frame
 UK_data_sum <- with(UK_data_sum, UK_data_sum[order(binomial),]) # reorder by name of species
 
+# All mammals for presence = extant; origin = native, reintroduced
+am12 <- read.csv("ALL_Mammals_1_2.csv")
+# All mammals for presence = extant; origin = native, reintroduced, introduced, origin uncertain
+#am1235 <- read.csv("ALL_Mammals_1_2_3_5.csv")
+
+am12_sum <- aggregate(shape_Area~binomial, am12, FUN=sum)
+am12_merge <- merge(UK_data_sum, am12_sum, by.x = "binomial", by.y="binomial")
+names(am12_merge) <- c("binomial", "id_no", "eco_code", "eco_spp_area", "total_spp_area")
+am12 <- mutate(am12_merge, prop_spp_area = eco_spp_area/total_spp_area*100) # sum number of species per ecoregion per group
+
 # list of unique species
 Species <- unique(UK_data[c("id_no", "binomial")])
 Species <- with(Species, Species[order(binomial),]) # reorder by name of species

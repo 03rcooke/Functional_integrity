@@ -6,9 +6,10 @@ UK_data <- read.csv("ALL_Species_Ecoregions.csv")
 
 UK_trait <- read.csv("Trait_data_UK.csv", row.names = 2,
                      # add species names to rows
-                     # colClasses means -999 values stay as a factor level
                      col.names = c("id_no","binomial","activity","mass","diet","habitat","litter","longevity","terrestriality","trophic"))
 # assign simple names to variables
+
+All_trait <- read.csv("ALL_mammals_1235_traits.csv", row.names = 2)
 
 out <- FUN(UK_data, UK_trait, corr = "cailliez", spp_list = FALSE, tree = FALSE)
 

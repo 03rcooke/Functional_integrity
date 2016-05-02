@@ -142,3 +142,8 @@ dendro_con <- cl_consensus(dendro_en)
 
 rownames(uld)[which(rownames(uld)=="average")]= "UPGMA"; rownames(uld)[which(rownames(uld)=="mcquitty")]= "WPGMA"; rownames(uld)[which(rownames(uld)=="single")]= "Single"; rownames(uld)[which(rownames(uld)=="complete")]= "Complete"; rownames(uld)[which(rownames(uld)=="consensus")]= "Consensus"; rownames(uld)[which(rownames(ul)=="ward.D2")]= "Ward D2"; rownames(ul)[which(rownames(ul)=="ward.D")]= "Ward D"
 
+
+TM <- c(as.vector(PanTHERIA$binomial), as.vector(IUCN$binomial))
+sort(TM)
+# Vector of taxonomic mismatches between the PanTHERIA and IUCN mammal species lists
+# length = 1043
