@@ -253,8 +253,8 @@ FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE, tree = FALSE)
     spp_final = spp_final,
     k = c_,
     CWM = CWM,
-    FR = res,
-    FD = FD$FDis)
+    FRed = res,
+    FDis = FD$FDis)
   
   plots <- list(
     clus = clus,

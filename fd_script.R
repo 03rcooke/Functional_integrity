@@ -9,7 +9,8 @@ UK_trait <- read.csv("Trait_data_UK.csv", row.names = 2,
                      col.names = c("id_no","binomial","activity","mass","diet","habitat","litter","longevity","terrestriality","trophic"))
 # assign simple names to variables
 
-All_trait <- read.csv("ALL_mammals_1235_traits.csv", row.names = 2)
+All_trait1235 <- read.csv("ALL_mammals_1235_traits.csv", row.names = 6)
+All_trait12 <- read.csv("ALL_mammals_12_traits.csv", row.names = 6)
 
 out <- FUN(UK_data, UK_trait, corr = "cailliez", spp_list = FALSE, tree = FALSE)
 
@@ -24,8 +25,8 @@ out@stats$spp_missing # number of species missing all trait data per ecoregion
 out@stats$spp_final # number of species per ecoregion after removing missing-data species
 out@stats$k # number of functional clusters as specified by the L method (Salvador & Chan, 2004)
 out@stats$CWM # community weighted mean
-out@stats$FR # functional redundancy
-out@stats$FD # functional dispersion
+out@stats$FRed # functional redundancy
+out@stats$FDis # functional dispersion
 
 #### Plots
 out@plots

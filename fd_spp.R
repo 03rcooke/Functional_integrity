@@ -39,9 +39,29 @@ am12 <- read.csv("ALL_Mammals_1_2.csv")
 #am1235 <- read.csv("ALL_Mammals_1_2_3_5.csv")
 
 am12_sum <- aggregate(shape_Area~binomial, am12, FUN=sum)
-am12_merge <- merge(UK_data_sum, am12_sum, by.x = "binomial", by.y="binomial")
-names(am12_merge) <- c("binomial", "id_no", "eco_code", "eco_spp_area", "total_spp_area")
-am12 <- mutate(am12_merge, prop_spp_area = eco_spp_area/total_spp_area*100) # sum number of species per ecoregion per group
+am12_merge <- merge(UK_data_sum, am12_sum, by.x = "binomial", by.y = "binomial")
+names(am12_merge) <- c("binomial", "id_no", "eco_code", "eco_spp_area", "total_spp_area") # areas in km2
+am12 <- mutate(am12_merge, prop_spp_area = eco_spp_area/total_spp_area*100) # species range within an ecoregion as a proportion of the species total range
+rm(am12_sum, am12_merge) # remove unneeded data frames
+
+# Ecoregion codes and areas
+eco_area <- read.csv("Eco_area.csv")
+  # excludes rock and ice - no area given by IUCN
+  # area in km2 rounded
+index <- c(as.vector(eco_area$eco_code))
+values <- c(as.vector(eco_area$area_km2))
+am12$eco_area <- values[match(am12$eco_code, index)]
+am12 <- mutate(am12, prop_eco_area = eco_spp_area/eco_area*100) # species range within an ecoregion as a proportion of the total ecoregion area
+
+# This hasn't worked!
+# Need to work out why the numbers don't match up
+
+am12 <- am12[c("binomial","id_no","eco_code","eco_area","eco_spp_area","total_spp_area","prop_spp_area")] # reorder columns of am12
+
+tourist_spp <- am12[am12$prop_spp_area < 1,]
+# list of species with <1 of their total range falling within the associated ecoregions
+
+
 
 # list of unique species
 Species <- unique(UK_data[c("id_no", "binomial")])

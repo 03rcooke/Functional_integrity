@@ -147,3 +147,6 @@ TM <- c(as.vector(PanTHERIA$binomial), as.vector(IUCN$binomial))
 sort(TM)
 # Vector of taxonomic mismatches between the PanTHERIA and IUCN mammal species lists
 # length = 1043
+
+# R.utils: used to identify empty csvs (no species within ecoregion) # calls: countLines
+empty_files <- lapply(Filter(function(x) countLines(x)<=1, csv_files), unlink)

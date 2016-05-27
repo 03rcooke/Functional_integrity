@@ -1,6 +1,6 @@
 ###GBIF
 
-library(dismo)  # check also the nice 'rgbif' package! 
+#library(dismo)  # check also the nice 'rgbif' package! 
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(dismo, rworldmap)
 
