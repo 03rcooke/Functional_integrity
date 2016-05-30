@@ -1,7 +1,14 @@
+## --------------------------------------------------------------
+## Name: fd_function.R
+## Description: Function to calculate functional diversity indices
+## Author: R.S.C. Cooke, R.S.Cooke@soton.ac.uk
+## Date: March 2016 - 
+## Outputs: Function named 'FUN'
+## --------------------------------------------------------------
+
 FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE, tree = FALSE) 
 {
-  # load necessary packages: fossil, data.table, FD, clue, dplyr, qpcR, stats, cowplot
-
+  # Set up required packages
   if (!require("pacman")) install.packages("pacman")
   pacman::p_load(fossil, data.table, FD, clue, dplyr, qpcR, stats, cowplot, ggdendro, ape, dendextend, methods)
   
@@ -18,7 +25,7 @@ FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE, tree = FALSE)
   # dendextend: used to cut a non-hclust dendrogram # calls: cutree
   # methods: used to create slots in output # calls: setClass
   
-  #### set up data ###
+  #### Set up data ###
   
   # sum the areas of each species per ecoregion
   UK_data_sum <- as.data.table(site[c(-3)])[, lapply(.SD, sum), by = list(id_no, binomial, eco_code)] # sum shape areas by species name and ecoregion

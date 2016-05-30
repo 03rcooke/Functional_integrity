@@ -1,3 +1,11 @@
+## --------------------------------------------------------------
+## Name: fd_script.R
+## Description: Code to run FD function
+## Author: R.S.C. Cooke, R.S.Cooke@soton.ac.uk
+## Date: March 2016 - 
+## Outputs: 
+## --------------------------------------------------------------
+
 # check working directory
 getwd()
 

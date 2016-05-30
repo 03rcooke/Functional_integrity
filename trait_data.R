@@ -1,19 +1,38 @@
-## Set up trait data for all mammal species
+## -------------------------------------------------------------------------------------
+## Name: trait_data.R
+## Description: Code to set up trait data for all mammal species, 
+##              identifies taxonomic matches and mismatches for 
+##              species data (IUCN) compared to the trait data 
+##              (PanTHERIA, Amniote, EltonTraits, MammalDIET)
+## Author: R.S.C. Cooke, R.S.Cooke@soton.ac.uk
+## Date: May 2016 - 
+## Outputs: PanTHERIA1235.csv, PanTHERIA12.csv, IUCN1235P.csv, IUCN12P.csv, 
+##          ALL_Mammals_1235_traits_PanTHERIA.csv, ALL_Mammals_12_traits_PanTHERIA.csv,
+##          Amniote1235_M.csv, Amniote12_M.csv, IUCN1235A_M.csv, IUCN12A_M.csv,
+##          ALL_Mammals_1235_traits_Amniote.csv, ALL_Mammals_12_traits_Amniote.csv,
+##          Elton1235_M.csv, Elton12_M.csv, IUCN1235E_M.csv, IUCN12E_M.csv,
+##          ALL_Mammals_1235_traits_Elton.csv, ALL_Mammals_12_traits_Elton.csv,
+##          MDIET1235.csv, MDIET12.csv, IUCN1235M.csv, IUCN12M.csv,
+##          ALL_Mammals_1235_traits_MammalDIET.csv, ALL_Mammals_12_traits_MammalDIET.csv
+## -------------------------------------------------------------------------------------
 
+# Set up required packages
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(fossil, data.table, FD, clue, dplyr, qpcR, stats, cowplot, ggdendro)
+pacman::p_load(dplyr)
 
 # dplyr: used to compare two data frames, combine species names # calls: anti_join, mutate
 
-## read in species unique lists
-
+## Read in species unique lists
 am12u <- read.csv("ALL_Mammals_1_2_unique.csv")
 # All mammals for presence = extant; origin = native, reintroduced
-# length = 5233
+# nrow = 5233
 
 am1235u <- read.csv("ALL_Mammals_1_2_3_5_unique.csv")
 # All mammals for presence = extant; origin = native, reintroduced, introduced, origin uncertain
-# length = 5235
+# nrow = 5235
+
+
+### Perform code for each trait data set: PanTHERIA, Amniote, EltonTraits, MammalDIET
 
 ######## PanTHERIA ##############
 
@@ -23,6 +42,9 @@ pan <- read.csv("PanTHERIA_1-0_WR05_Aug2008.csv")
 
 colnames(pan)[5] <- "binomial"
 # set column MSW05_Binomial to binomial to match species tables
+
+pan <- arrange(pan, binomial)
+# order data by binomial A-Z
 
 ## 12 All mammals for presence = extant; origin = native, reintroduced ##
 
@@ -38,7 +60,7 @@ pan12 <- pan[!(pan$binomial %in% c(as.vector(PanTHERIA12$binomial))),]
 # nrow = 4802
 
 # create empty dataframe to match trait database columns
-IUCN_empty12P <- data.frame(matrix(NA, nrow = length(IUCN12P$binomial), ncol = ncol(PanTHERIA12)))
+IUCN_empty12P <- data.frame(matrix(NA, nrow = nrow(IUCN12P), ncol = ncol(PanTHERIA12)))
 colnames(IUCN_empty12P) <- colnames(PanTHERIA12)
 IUCN_empty12P$binomial <- IUCN12P$binomial
 
@@ -59,7 +81,7 @@ pan1235 <- pan[!(pan$binomial %in% c(as.vector(PanTHERIA1235$binomial))),]
 # nrow = 4804
 
 # create empty dataframe to match trait database columns
-IUCN_empty1235P <- data.frame(matrix(NA, nrow = length(IUCN1235P$binomial), ncol = ncol(PanTHERIA1235)))
+IUCN_empty1235P <- data.frame(matrix(NA, nrow = nrow(IUCN1235P), ncol = ncol(PanTHERIA1235)))
 colnames(IUCN_empty1235P) <- colnames(PanTHERIA1235)
 IUCN_empty1235P$binomial <- IUCN1235P$binomial
 
@@ -73,17 +95,14 @@ pan1235 <- rbind(pan1235, IUCN_empty1235P)
 #write.table(pan1235, "~/R/Functional_integrity/ALL_Mammals_1235_traits_PanTHERIA.csv", sep=",")
 #write.table(pan12, "~/R/Functional_integrity/ALL_Mammals_12_traits_PanTHERIA.csv", sep=",")
 
+# Species different between 12 and 1235
 anti_join(PanTHERIA12, PanTHERIA1235, by = "binomial")
-# species different between 12 and 1235
 
 # Mus musculus - look at IUCN map
 
 # Acomys nesiotes - Acomys nesiotes is endemic to Cyprus, where available evidence 
 # suggests that it was possibly introduced by humans, and therefore may represent a 
 # non-native population of Acomys cahirinus.
-
-
-
 
 
 
@@ -97,11 +116,14 @@ amn <- read.csv("Amniote_Database_Aug_2015.csv")
 
 # create new column with full scientific name
 amn <- mutate(amn, binomial = paste(genus, species, sep = " ")) # name as binomial to match species tables
-amn <- amn2[c(1:7,37,8:36)] # reorder to move binomial from the end
+amn <- amn[c(1:7,37,8:36)] # reorder columns to move binomial from the end
 
 # subset just for mammals
 amn <- amn[amn$class == "Mammalia",]
 # nrow = 4953
+
+amn <- arrange(amn, binomial)
+# order data by binomial A-Z
 
 ## 12 All mammals for presence = extant; origin = native, reintroduced ##
 
@@ -117,7 +139,7 @@ amn12 <- amn[!(amn$binomial %in% c(as.vector(Amniote12$binomial))),]
 # nrow = 4439
 
 # create empty dataframe to match trait database columns
-IUCN_empty12A <- data.frame(matrix(NA, nrow = length(IUCN12A$binomial), ncol = ncol(Amniote12)))
+IUCN_empty12A <- data.frame(matrix(NA, nrow = nrow(IUCN12A), ncol = ncol(Amniote12)))
 colnames(IUCN_empty12A) <- colnames(Amniote12)
 IUCN_empty12A$binomial <- IUCN12A$binomial
 
@@ -128,17 +150,17 @@ amn12 <- rbind(amn12, IUCN_empty12A)
 
 Amniote1235 <- anti_join(amn, am1235u, by = "binomial")
 # Species listed by Amniote but not listed by IUCN
-# length = 512
+# nrow = 512
 IUCN1235A <- anti_join(am1235u, amn, by = "binomial")
 # IUCN species not listed in Amniote
-# length = 794
+# nrow = 794
 
 amn1235 <- amn[!(amn$binomial %in% c(as.vector(Amniote1235$binomial))),]
 # removed species listed by Amniote but not listed by IUCN
-# length = 4441
+# nrow = 4441
 
 # create empty dataframe to match trait database columns
-IUCN_empty1235A <- data.frame(matrix(NA, nrow = length(IUCN1235A$binomial), ncol = ncol(Amniote1235)))
+IUCN_empty1235A <- data.frame(matrix(NA, nrow = nrow(IUCN1235A), ncol = ncol(Amniote1235)))
 colnames(IUCN_empty1235A) <- colnames(Amniote1235)
 IUCN_empty1235A$binomial <- IUCN1235A$binomial
 
@@ -154,5 +176,134 @@ amn1235 <- rbind(amn1235, IUCN_empty1235A)
 
 
 
+
+
+
+
+########### EltonTraits 1.0  - mammals ####################
+
+## read in Elton Traits 1.0 database
+et <- read.csv("MamFuncDat.csv")
+# nrow = 5400
+
+colnames(et)[3] <- "binomial"
+# set column Scientific to binomial to match species tables
+
+et <- arrange(et, binomial)
+# order data by binomial A-Z
+
+## 12 All mammals for presence = extant; origin = native, reintroduced ##
+
+Elton12 <- anti_join(et, am12u, by = "binomial")
+# Species listed by Elton but not listed by IUCN
+# nrow = 599
+IUCN12E <- anti_join(am12u, et, by = "binomial")
+# IUCN species not listed in Elton
+# nrow = 432
+
+et12 <- et[!(et$binomial %in% c(as.vector(Elton12$binomial))),]
+# removed species listed by Elton but not listed by IUCN
+# nrow = 4801
+
+# create empty dataframe to match trait database columns
+IUCN_empty12E <- data.frame(matrix(NA, nrow = nrow(IUCN12E), ncol = ncol(Elton12)))
+colnames(IUCN_empty12E) <- colnames(Elton12)
+IUCN_empty12E$binomial <- IUCN12E$binomial
+
+# combine trait database with empty values for species listed by the IUCN but not listed by EltonTraits
+et12 <- rbind(et12, IUCN_empty12E)
+
+## 1235 All mammals for presence = extant; origin = native, reintroduced, introduced, origin ##
+
+Elton1235 <- anti_join(et, am1235u, by = "binomial")
+# Species listed by Elton but not listed by IUCN
+# nrow = 597
+IUCN1235E <- anti_join(am1235u, et, by = "binomial")
+# IUCN species not listed in Elton
+# nrow = 432
+
+et1235 <- et[!(et$binomial %in% c(as.vector(Elton1235$binomial))),]
+# removed species listed by Elton but not listed by IUCN
+# nrow = 4803
+
+# create empty dataframe to match trait database columns
+IUCN_empty1235E <- data.frame(matrix(NA, nrow = nrow(IUCN1235E), ncol = ncol(Elton1235)))
+colnames(IUCN_empty1235E) <- colnames(Elton1235)
+IUCN_empty1235E$binomial <- IUCN1235E$binomial
+
+# combine trait database with empty values for species listed by the IUCN but not listed by EltonTraits
+et1235 <- rbind(et1235, IUCN_empty1235E)
+
+#write.table(Elton1235, "~/R/Functional_integrity/Elton1235_M.csv", sep=",")
+#write.table(Elton12, "~/R/Functional_integrity/Elton12_M.csv", sep=",")
+#write.table(IUCN1235E, "~/R/Functional_integrity/IUCN1235E_M.csv", sep=",")
+#write.table(IUCN12E, "~/R/Functional_integrity/IUCN12E_M.csv", sep=",")
+#write.table(et1235, "~/R/Functional_integrity/ALL_Mammals_1235_traits_Elton.csv", sep=",")
+#write.table(et12, "~/R/Functional_integrity/ALL_Mammals_12_traits_Elton.csv", sep=",")
+
+
+
+
+########### MammalDiet ####################
+
+## read in MammalDiet 1.0 trait database
+md <- read.csv("MammalDIET_V1.0.csv")
+# nrow = 5364
+
+# create new column with full scientific name
+md <- mutate(md, binomial = paste(Genus, Species, sep = " ")) # name as binomial to match species tables
+md <- md[c(1:5,31,6:30)] # reorder columns to move binomial from the end
+
+md <- arrange(md, binomial)
+# order data by binomial A-Z
+
+## 12 All mammals for presence = extant; origin = native, reintroduced ##
+
+MDIET12 <- anti_join(md, am12u, by = "binomial")
+# Species listed by MammalDIET but not listed by IUCN
+# nrow = 246
+IUCN12M <- anti_join(am12u, md, by = "binomial")
+# IUCN species not listed in MammalDIET
+# nrow = 115
+
+md12 <- md[!(md$binomial %in% c(as.vector(MDIET12$binomial))),]
+# removed species listed by MammalDIET but not listed by IUCN
+# nrow = 5118
+
+# create empty dataframe to match trait database columns
+IUCN_empty12M <- data.frame(matrix(NA, nrow = nrow(IUCN12M), ncol = ncol(MDIET12)))
+colnames(IUCN_empty12M) <- colnames(MDIET12)
+IUCN_empty12M$binomial <- IUCN12M$binomial
+
+# combine trait database with empty values for species listed by the IUCN but not listed by MammalDIET
+md12 <- rbind(md12, IUCN_empty12M)
+
+## 1235 All mammals for presence = extant; origin = native, reintroduced, introduced, origin ##
+
+MDIET1235 <- anti_join(md, am1235u, by = "binomial")
+# Species listed by MammalDIET but not listed by IUCN
+# nrow = 244
+IUCN1235M <- anti_join(am1235u, md, by = "binomial")
+# IUCN species not listed in MammalDIET
+# nrow = 115
+
+md1235 <- md[!(md$binomial %in% c(as.vector(MDIET1235$binomial))),]
+# removed species listed by MammalDIET but not listed by IUCN
+# nrow = 5120
+
+# create empty dataframe to match trait database columns
+IUCN_empty1235M <- data.frame(matrix(NA, nrow = nrow(IUCN1235M), ncol = ncol(MDIET1235)))
+colnames(IUCN_empty1235M) <- colnames(MDIET1235)
+IUCN_empty1235M$binomial <- IUCN1235M$binomial
+
+# combine trait database with empty values for species listed by the IUCN but not listed by MammalDIET
+md1235 <- rbind(md1235, IUCN_empty1235M)
+
+#write.table(MDIET1235, "~/R/Functional_integrity/MDIET1235.csv", sep=",")
+#write.table(MDIET12, "~/R/Functional_integrity/MDIET12.csv", sep=",")
+#write.table(IUCN1235M, "~/R/Functional_integrity/IUCN1235M.csv", sep=",")
+#write.table(IUCN12M, "~/R/Functional_integrity/IUCN12M.csv", sep=",")
+#write.table(md1235, "~/R/Functional_integrity/ALL_Mammals_1235_traits_MammalDIET.csv", sep=",")
+#write.table(md12, "~/R/Functional_integrity/ALL_Mammals_12_traits_MammalDIET.csv", sep=",")
 
 

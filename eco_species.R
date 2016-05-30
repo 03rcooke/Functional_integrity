@@ -1,9 +1,21 @@
-### Combine mammal data from each ecoregion
+## --------------------------------------------------------------
+## Name: eco_species.R
+## Description: Code to combine species composition data for each ecoregion,
+##              which is listed in separate .csv files (produced from Python 
+##              code: )
+## Author: R.S.C. Cooke, R.S.Cooke@soton.ac.uk
+## Date: April 2016 - 
+## Outputs: 
+## --------------------------------------------------------------
 
+# Set up required packages
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(plyr)
 
-# plyr: used to readadd filenames (ecoregion codes) to list of csvs # calls: ldply
+# plyr: used to add filenames (ecoregion codes) to list of csvs # calls: ldply
+
+
+#### Mammals ######
 
 csv_files <- dir(path = "~/ArcGIS/PhD/Ecoregion_CSVs", pattern = "csv$", full.names = TRUE)
 
