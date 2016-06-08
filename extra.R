@@ -150,3 +150,12 @@ sort(TM)
 
 # R.utils: used to identify empty csvs (no species within ecoregion) # calls: countLines
 empty_files <- lapply(Filter(function(x) countLines(x)<=1, csv_files), unlink)
+
+spp = c("Oryzomys galapagoensis")
+tsn <- gnr_resolve(names = spp)
+tsn <- searchbyscientificname(spp)
+
+lapply(tsn, itis_acceptname)
+
+eol_search(spp)
+get_ids(spp)

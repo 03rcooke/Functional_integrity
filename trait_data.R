@@ -18,9 +18,10 @@
 
 # Set up required packages
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(dplyr)
+pacman::p_load(dplyr, taxize)
 
 # dplyr: used to compare two data frames, combine species names # calls: anti_join, mutate
+# taxize: used to find taxonomic synonyms and subspecies for taxonomic mismatches # calls: synonyms
 
 ## Read in species unique lists
 am12u <- read.csv("ALL_Mammals_1_2_unique.csv")
@@ -104,6 +105,14 @@ anti_join(PanTHERIA12, PanTHERIA1235, by = "binomial")
 # suggests that it was possibly introduced by humans, and therefore may represent a 
 # non-native population of Acomys cahirinus.
 
+
+Syn1235P <- synonyms(IUCN1235P$binomial[1:10], db = "itis") # find synonyms for species listed by IUCN but not listed by PanTHERIA
+
+### add code to produce an empty data frame for each NA record
+
+rbindlist = as.data.frame(data.table::rbindlist(Syn1235P[1:4])) # collapse list of data frames for each species into new data frame
+seq_tsn <- as.data.frame(table(rbindlist$sub_tsn))
+# add code to rep binomials by sequence in sub_tsn
 
 
 
