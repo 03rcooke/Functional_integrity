@@ -88,12 +88,12 @@ IUCN_empty1235P$binomial <- IUCN1235P$binomial
 # combine trait database with empty values for species listed by the IUCN but not listed by PanTHERIA
 pan1235 <- rbind(pan1235, IUCN_empty1235P)
 
-#write.table(PanTHERIA1235, "~/R/Functional_integrity/PanTHERIA1235.csv", sep=",")
-#write.table(PanTHERIA12, "~/R/Functional_integrity/PanTHERIA12.csv", sep=",")
-#write.table(IUCN1235P, "~/R/Functional_integrity/IUCN1235P.csv", sep=",")
-#write.table(IUCN12P, "~/R/Functional_integrity/IUCN12P.csv", sep=",")
-#write.table(pan1235, "~/R/Functional_integrity/ALL_Mammals_1235_traits_PanTHERIA.csv", sep=",")
-#write.table(pan12, "~/R/Functional_integrity/ALL_Mammals_12_traits_PanTHERIA.csv", sep=",")
+#write.table(PanTHERIA1235, "~/R/Functional_integrity/PanTHERIA1235.csv", sep=",") # Species listed by PanTHERIA but not listed by IUCN 1235
+#write.table(PanTHERIA12, "~/R/Functional_integrity/PanTHERIA12.csv", sep=",") # Species listed by PanTHERIA but not listed by IUCN 12
+#write.table(IUCN1235P, "~/R/Functional_integrity/IUCN1235P.csv", sep=",") # Species listed by IUCN 1235 but not listed by PanTHERIA
+#write.table(IUCN12P, "~/R/Functional_integrity/IUCN12P.csv", sep=",") # Species listed by IUCN 12 but not listed by PanTHERIA
+#write.table(pan1235, "~/R/Functional_integrity/ALL_Mammals_1235_traits_PanTHERIA.csv", sep=",") # PanTHERIA trait data for all IUCN 1235 species
+#write.table(pan12, "~/R/Functional_integrity/ALL_Mammals_12_traits_PanTHERIA.csv", sep=",") # PanTHERIA trait data for all IUCN 12 species
 
 # Species different between 12 and 1235
 anti_join(PanTHERIA12, PanTHERIA1235, by = "binomial")
@@ -167,12 +167,12 @@ IUCN_empty1235A$binomial <- IUCN1235A$binomial
 # combine trait database with empty values for species listed by the IUCN but not listed by Amniote
 amn1235 <- rbind(amn1235, IUCN_empty1235A)
 
-#write.table(Amniote1235, "~/R/Functional_integrity/Amniote1235_M.csv", sep=",")
-#write.table(Amniote12, "~/R/Functional_integrity/Amniote12_M.csv", sep=",")
-#write.table(IUCN1235A, "~/R/Functional_integrity/IUCN1235A_M.csv", sep=",")
-#write.table(IUCN12A, "~/R/Functional_integrity/IUCN12A_M.csv", sep=",")
-#write.table(amn1235, "~/R/Functional_integrity/ALL_Mammals_1235_traits_Amniote.csv", sep=",")
-#write.table(amn12, "~/R/Functional_integrity/ALL_Mammals_12_traits_Amniote.csv", sep=",")
+#write.table(Amniote1235, "~/R/Functional_integrity/Amniote1235_M.csv", sep=",") # Species listed by Amniote[Mammals] but not listed by IUCN 1235
+#write.table(Amniote12, "~/R/Functional_integrity/Amniote12_M.csv", sep=",") # Species listed by Amniote[Mammals] but not listed by IUCN 12
+#write.table(IUCN1235A, "~/R/Functional_integrity/IUCN1235A_M.csv", sep=",") # Species listed by IUCN 1235 but not listed by Amniote[Mammals]
+#write.table(IUCN12A, "~/R/Functional_integrity/IUCN12A_M.csv", sep=",") # Species listed by IUCN 12 but not listed by Amniote[Mammals]
+#write.table(amn1235, "~/R/Functional_integrity/ALL_Mammals_1235_traits_Amniote.csv", sep=",") # Amniote[Mammals] trait data for all IUCN 1235 species
+#write.table(amn12, "~/R/Functional_integrity/ALL_Mammals_12_traits_Amniote.csv", sep=",") # Amniote[Mammals] trait data for all IUCN 12 species
 
 
 
@@ -234,12 +234,12 @@ IUCN_empty1235E$binomial <- IUCN1235E$binomial
 # combine trait database with empty values for species listed by the IUCN but not listed by EltonTraits
 et1235 <- rbind(et1235, IUCN_empty1235E)
 
-#write.table(Elton1235, "~/R/Functional_integrity/Elton1235_M.csv", sep=",")
-#write.table(Elton12, "~/R/Functional_integrity/Elton12_M.csv", sep=",")
-#write.table(IUCN1235E, "~/R/Functional_integrity/IUCN1235E_M.csv", sep=",")
-#write.table(IUCN12E, "~/R/Functional_integrity/IUCN12E_M.csv", sep=",")
-#write.table(et1235, "~/R/Functional_integrity/ALL_Mammals_1235_traits_Elton.csv", sep=",")
-#write.table(et12, "~/R/Functional_integrity/ALL_Mammals_12_traits_Elton.csv", sep=",")
+#write.table(Elton1235, "~/R/Functional_integrity/Elton1235_M.csv", sep=",") # Species listed by EltonTraits[Mammals] but not listed by IUCN 1235
+#write.table(Elton12, "~/R/Functional_integrity/Elton12_M.csv", sep=",") # Species listed by EltonTraits[Mammals] but not listed by IUCN 12
+#write.table(IUCN1235E, "~/R/Functional_integrity/IUCN1235E_M.csv", sep=",") # Species listed by IUCN 1235 but not listed by EltonTraits[Mammals]
+#write.table(IUCN12E, "~/R/Functional_integrity/IUCN12E_M.csv", sep=",") # Species listed by IUCN 12 but not listed by EltonTraits[Mammals]
+#write.table(et1235, "~/R/Functional_integrity/ALL_Mammals_1235_traits_Elton.csv", sep=",") # EltonTraits[Mammals] trait data for all IUCN 1235 species
+#write.table(et12, "~/R/Functional_integrity/ALL_Mammals_12_traits_Elton.csv", sep=",") # EltonTraits[Mammals] trait data for all IUCN 12 species
 
 
 
@@ -299,11 +299,11 @@ IUCN_empty1235M$binomial <- IUCN1235M$binomial
 # combine trait database with empty values for species listed by the IUCN but not listed by MammalDIET
 md1235 <- rbind(md1235, IUCN_empty1235M)
 
-#write.table(MDIET1235, "~/R/Functional_integrity/MDIET1235.csv", sep=",")
-#write.table(MDIET12, "~/R/Functional_integrity/MDIET12.csv", sep=",")
-#write.table(IUCN1235M, "~/R/Functional_integrity/IUCN1235M.csv", sep=",")
-#write.table(IUCN12M, "~/R/Functional_integrity/IUCN12M.csv", sep=",")
-#write.table(md1235, "~/R/Functional_integrity/ALL_Mammals_1235_traits_MammalDIET.csv", sep=",")
-#write.table(md12, "~/R/Functional_integrity/ALL_Mammals_12_traits_MammalDIET.csv", sep=",")
+#write.table(MDIET1235, "~/R/Functional_integrity/MDIET1235.csv", sep=",") # Species listed by MammalDIET but not listed by IUCN 1235
+#write.table(MDIET12, "~/R/Functional_integrity/MDIET12.csv", sep=",") # Species listed by MammalDIET but not listed by IUCN 12
+#write.table(IUCN1235M, "~/R/Functional_integrity/IUCN1235M.csv", sep=",") # Species listed by IUCN 1235 but not listed by MammalDIET
+#write.table(IUCN12M, "~/R/Functional_integrity/IUCN12M.csv", sep=",") # Species listed by IUCN 12 but not listed by MammalDIET
+#write.table(md1235, "~/R/Functional_integrity/ALL_Mammals_1235_traits_MammalDIET.csv", sep=",") # MammalDIET trait data for all IUCN 1235 species
+#write.table(md12, "~/R/Functional_integrity/ALL_Mammals_12_traits_MammalDIET.csv", sep=",") # MammalDIET trait data for all IUCN 12 species
 
 
