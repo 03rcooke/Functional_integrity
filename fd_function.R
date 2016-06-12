@@ -272,4 +272,4 @@ FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE, tree = FALSE)
   result <- result(stats = stats, plots = plots)
   
   return(result)
-} # end of FUN
+} # end of FUN function

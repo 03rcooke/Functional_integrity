@@ -159,3 +159,32 @@ lapply(tsn, itis_acceptname)
 
 eol_search(spp)
 get_ids(spp)
+
+
+#
+
+#empty <- data.frame(matrix(NA, nrow = 1, ncol = ncol(rbindlist)))
+#colnames(empty) <- colnames(rbindlist)
+
+#p <- sapply(Syn1235P, function(x) ifelse(is.na(Syn1235P), empty, x))
+
+sapply(Syn1235P, function(x) ifelse(is.na(x), 1, x))
+
+#seq_tsn <- as.data.frame(table(rbindlist$sub_tsn))
+
+#tsn <- rep(seq_tsn$Var1, times = seq_tsn$Freq)
+
+#seq_bi <- sapply(seq_bi, function(x) ifelse(is.null(x), 1, x))
+
+#lapply(Syn1235P$syn_name, function(x) ifelse(!is.na(as.numeric(Syn1235P$syn_name)), Syn1235P$acc_tsn, Syn1235P$syn_name))
+
+Syn1235P <- Syn1235P[rep(seq_len(nrow(Syn1235P)), each=2),]
+
+
+Syn_1 <- anti_join(pan, Syn1235P_1, by = "binomial")
+# Species listed by synonyms but not listed by trait database
+# nrow = 5413
+
+Syn_T <- pan[!(pan$binomial %in% c(as.vector(Syn_1$binomial))),]
+# removed species listed by synonyms but not listed by IUCN
+# nrow = 3
