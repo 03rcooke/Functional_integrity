@@ -6,31 +6,26 @@
 ##              (PanTHERIA, Amniote, EltonTraits, MammalDIET)
 ## Author: R.S.C. Cooke, R.S.Cooke@soton.ac.uk
 ## Date: May 2016 - 
-## Outputs: PanTHERIA1235.csv, PanTHERIA12.csv, IUCN1235P.csv, IUCN12P.csv, 
-##          ALL_Mammals_1235_traits_PanTHERIA.csv, ALL_Mammals_12_traits_PanTHERIA.csv,
-##          Amniote1235_M.csv, Amniote12_M.csv, IUCN1235A_M.csv, IUCN12A_M.csv,
-##          ALL_Mammals_1235_traits_Amniote.csv, ALL_Mammals_12_traits_Amniote.csv,
-##          Elton1235_M.csv, Elton12_M.csv, IUCN1235E_M.csv, IUCN12E_M.csv,
-##          ALL_Mammals_1235_traits_Elton.csv, ALL_Mammals_12_traits_Elton.csv,
-##          MDIET1235.csv, MDIET12.csv, IUCN1235M.csv, IUCN12M.csv,
-##          ALL_Mammals_1235_traits_MammalDIET.csv, ALL_Mammals_12_traits_MammalDIET.csv
+## Outputs: 
 ## -------------------------------------------------------------------------------------
 
 # Set up required packages
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(dplyr, taxize, data.table, rlist)
+pacman::p_load(dplyr, taxize, data.table, rlist, stats, tidyr)
 
 # dplyr: used to compare two data frames, combine species names # calls: anti_join, mutate
 # taxize: used to find taxonomic synonyms and subspecies for taxonomic mismatches # calls: synonyms
 # data.table: used to concantenate a list of data frames # calls: rbindlist
 # rlist: used to remove data frames from a list of data frames # calls: list.remove
+# stats: used to aggregate synonyms # calls: aggregate
+# tidyr: used to separate synonyms in to two columns # calls: separate
 
 ## Read in species unique lists
-am12u <- read.csv("ALL_Mammals_1_2_unique.csv")
+am12u <- read.csv("ALL_Mammals_1_2_unique.csv", stringsAsFactors = FALSE)
 # All mammals for presence = extant; origin = native, reintroduced
 # nrow = 5233
 
-am1235u <- read.csv("ALL_Mammals_1_2_3_5_unique.csv")
+am1235u <- read.csv("ALL_Mammals_1_2_3_5_unique.csv", stringsAsFactors = FALSE)
 # All mammals for presence = extant; origin = native, reintroduced, introduced, origin uncertain
 # nrow = 5235
 
@@ -45,7 +40,7 @@ am12uT <- am1235u[am1235u$origin == 1 | am1235u$origin == 2,]
 ######## PanTHERIA ##############
 
 ## read in PanTHERIA trait database
-pan <- read.csv("PanTHERIA_1-0_WR05_Aug2008.csv")
+pan <- read.csv("PanTHERIA_1-0_WR05_Aug2008.csv", stringsAsFactors = FALSE)
 # nrow = 5416
 
 colnames(pan)[5] <- "binomial"
@@ -120,86 +115,79 @@ anti_join(PanTHERIA12, PanTHERIA1235, by = "binomial")
 spp1235P <- IUCN1235P$binomial[1:10] # species list to find synonyms for: species listed by IUCN1235 but not listed by PanTHERIA
 
 syn <- synonyms(spp1235P, db = "itis") # find synonyms - uses taxize package
-no_syn <- which(is.na(syn) == TRUE); no_syn <- names(no_syn) # list those that have no synonyms
+no_syn_na <- which(is.na(syn) == TRUE); no_syn_na <- names(no_syn_na) # list those species that have no synonym data
+no_syn_col <- which(sapply(syn, NCOL) == 3); no_syn_col <- names(no_syn_col) # list those species that have data but no synonyms 
+no_syn <- c(no_syn_na, no_syn_col)
 
 spp1235P_syn <- setdiff(spp1235P, no_syn) # remove species from species list that have no synonyms
+
 syndf <- list.remove(syn, no_syn) # remove species data frames from synonym list that are empty - uses rlist package
 
 Syn1235P <- as.data.frame(data.table::rbindlist(syndf)) # collapse list of data frames for each species into new single data frame
 
-seq_bi <- sapply(syndf, nrow) %>% unlist(seq_bi) # number of rows per species
+seq_bi <- sapply(syndf, nrow); seq_bi <- unlist(seq_bi) # number of rows per species
 seq_bi <- rep(spp1235P_syn, times = as.vector(seq_bi)) # repeat species names with synonyms by seq_bi
-Syn1235P <- mutate(Syn1235P, binomial = seq_bi)  # add sequence of species names to synonym data frame
+Syn1235P <- mutate(Syn1235P, binomial_IUCN = seq_bi)  # add sequence of species names to synonym data frame
 
-acc_tsn1 <- ifelse(is.na(as.numeric(Syn1235P$acc_tsn)), Syn1235P$syn_name, Syn1235P$acc_tsn) # swap accepted tsn with syn names where needed
-Syn1235P <- mutate(Syn1235P, acc_tsn1 = acc_tsn1) # add edited acc_tsn column to data frame
+acc_tsn_e <- ifelse(is.na(as.numeric(Syn1235P$acc_tsn)), Syn1235P$syn_name, Syn1235P$acc_tsn) # swap accepted tsn with syn names where needed
+Syn1235P <- mutate(Syn1235P, acc_tsn_e = acc_tsn_e) # add edited acc_tsn column to data frame
 
-syn_name1 <- ifelse(!is.na(as.numeric(Syn1235P$syn_name)), Syn1235P$acc_tsn, Syn1235P$syn_name) # swap syn names with accepted tsn where needed
-Syn1235P <- mutate(Syn1235P, syn_name1 = syn_name1) # add edited syn_name column to data frame
+syn_name_e <- ifelse(!is.na(as.numeric(Syn1235P$syn_name)), Syn1235P$acc_tsn, Syn1235P$syn_name) # swap syn names with accepted tsn where needed
+Syn1235P <- mutate(Syn1235P, syn_name_e = syn_name_e) # add edited syn_name column to data frame
 
-Syn1235P <- Syn1235P[c(5,1,6:7,4)] # reorder columns to move binomial from the end
+Syn1235P <- aggregate(Syn1235P, by = list(Syn1235P$binomial_IUCN), FUN = unique) # collapse species with more than one synonym into one row - uses stats package
+Syn1235P <- separate(Syn1235P, syn_name_e, c("syn_name1", "syn_name2"), ", ", extra = "merge", fill = "right") # split multiple synonyms into separate columns - uses tidyr package
 
-# if else chained loop to split data in to first, second, third and fourth synonyms depending on the species with the most synonyms in data frame
+Syn1235P$syn_name1 <- gsub("c(", "", Syn1235P$syn_name1, fixed = TRUE) # remove leading "c(" introduced by separate
+Syn1235P$syn_name1 <- gsub("[^[:alnum:][:space:]]", "", Syn1235P$syn_name1) # remove all punctuation introduced by separate
+Syn1235P$syn_name2 <- gsub("[^[:alnum:][:space:]]", "", Syn1235P$syn_name2) # remove all punctuation introduced by separate
 
-if(max(as.vector(table(Syn1235P$binomial))) == 1) {
-  Syn1235P_1 <- Syn1235P[!duplicated(Syn1235P$binomial),] # create data frame of first synonyms
-} else {
-  if(max(as.vector(table(Syn1235P$binomial))) == 2) {
-    Syn1235P_1 <- Syn1235P[!duplicated(Syn1235P$binomial),] # create data frame of first synonyms
-    Syn1235P_2 <- Syn1235P[duplicated(Syn1235P$binomial),] # create data frame of second synonyms
-} else {
-  if(max(as.vector(table(Syn1235P$binomial))) == 3) {
-    Syn1235P_1 <- Syn1235P[!duplicated(Syn1235P$binomial),] # create data frame of first synonyms
-    Syn1235P_T <- Syn1235P[duplicated(Syn1235P$binomial),] # create data frame of second synonyms
-    Syn1235P_2 <- Syn1235P_T[!duplicated(Syn1235P_T$binomial),] # create temporary dataframe
-    Syn1235P_3 <- Syn1235P_T[duplicated(Syn1235P_T$binomial),] # create data frame of third synonyms
-    rm(Syn1235P_T)
-  } else {
-  if(max(as.vector(table(Syn1235P$binomial))) == 4) {
-    Syn1235P_1 <- Syn1235P[!duplicated(Syn1235P$binomial),] # create data frame of first synonyms
-    Syn1235P_T <- Syn1235P[duplicated(Syn1235P$binomial),] # create temporary dataframe
-    Syn1235P_2 <- Syn1235P_T[!duplicated(Syn1235P_T$binomial),] # create data frame of second synonyms
-    Syn1235P_T <- Syn1235P_T[duplicated(Syn1235P_T$binomial),] # create temporary dataframe
-    Syn1235P_3 <- Syn1235P_T[!duplicated(Syn1235P_T$binomial),] # create data frame of third synonyms
-    Syn1235P_4 <- Syn1235P_T[duplicated(Syn1235P_T$binomial),] # create data frame of fourth synonyms
-    rm(Syn1235P_T)
-  }}}}
+Syn1235P <- mutate(Syn1235P, syn_name3 = gsub("[[:space:]]+$", "", gsub("[[:alpha:]]+$", "" , Syn1235P$syn_name1))) # add column of trinomials reduced to binomials based on first synonyms - gsub removes last word of name and any spaces produced
+Syn1235P <- mutate(Syn1235P, syn_name4 = gsub("[[:space:]]+$", "", gsub("[[:alpha:]]+$", "" , Syn1235P$syn_name2))) # add column of trinomial names reduced to binomial names based on second synonyms
 
-names(Syn1235P_1) <- c("binomial_IUCN", "sub_tsn", "acc_tsn", "binomial", "syn_tsn")
+Syn1235P <- Syn1235P[c(6,2,7:11)] # reorder columns to move binomial from the end and drop unneeded columns
 
-IUCN_syn_1 <- anti_join(Syn1235P_1, pan, by = "binomial")
+## Synonyms
+
+syn_a <- inner_join(Syn1235P, pan, by = c("syn_name1" = "binomial"))
+# Species matched in trait database based on first synonyms
+
+Syn1235P <- Syn1235P[!(Syn1235P$binomial_IUCN %in% c(as.vector(syn_a$binomial_IUCN))),]
+# Remove species matched by first synonym - do not need to try second synonym
+
+syn_b <- inner_join(Syn1235P, pan, by = c("syn_name2" = "binomial"))
+# Species matched in trait database based on second synonyms
+
+## Subspecies
+
+Syn1235P <- Syn1235P[!(Syn1235P$binomial_IUCN %in% c(as.vector(syn_b$binomial_IUCN))),]
+# Remove species matched by second synonym - do not need to try third synonym (subspecies)
+
+syn_c <- inner_join(Syn1235P, pan, by = c("syn_name3" = "binomial"))
+# Species matched in trait database based on third synonym (subspecies)
+
+Syn1235P <- Syn1235P[!(Syn1235P$binomial_IUCN %in% c(as.vector(syn_c$binomial_IUCN))),]
+# Remove species matched by third synonym (subspecies) - do not need to try fourth synonym (subspecies)
+
+syn_d <- inner_join(Syn1235P, pan, by = c("syn_name4" = "binomial"))
+# Species matched in trait database based on fourth synonym (subspecies)
+
+syn_comb <- rbind(syn_a, syn_b, syn_c, syn_d); setnames(syn_comb, "binomial_IUCN", "binomial") # Combine trait data matched by synonyms and subspecies
+syn_comb <- syn_comb[c(1,8:ncol(syn_comb),4:7)] # drop unneeded columns: sub_tsn and acc_tsn_e and reorder to put syn_names at the end
+syn_comb <- inner_join(syn_comb, hdg, by = "binomial") # join trait data with species data for species matched by synonyms
+syn_comb <- syn_comb[,!apply(syn_comb, 2, function(x) all(is.na(x)))] # remove columns of all NAs generated during inner_join
+colnames(syn_comb) <- gsub(".x", "", colnames(syn_comb), fixed = TRUE) # remove .x from column names generated during inner_join
+
+hdg[,c("syn_name1","syn_name2","syn_name3","syn_name4")] <- NA # add syn_names to hdg data frame
+
+IUCN_syn <- anti_join(Syn1235P, pan, by = "binomial"); IUCN_syn <- arrange(IUCN_syn, binomial_IUCN) # order data by binomial A-Z
 # IUCN species not listed in synonyms, i.e. species that need further matching efforts
-# nrow = 4
 
-syn_a <- inner_join(Syn1235P_1, pan, by = "binomial")
-setnames(syn_a, "binomial", "binomial_synonym")
-setnames(syn_a, "binomial_IUCN", "binomial")
+hdg <- hdg[!(hdg$binomial %in% c(as.vector(syn_comb$binomial))),]
+# Remove species with NA values that have now been matched by synonyms (subspecies)
 
-
-names(Syn1235P_2) <- c("binomial_IUCN", "sub_tsn", "acc_tsn", "binomial", "syn_tsn")
-
-IUCN_syn_2 <- anti_join(Syn1235P_2, pan, by = "binomial")
-# IUCN species not listed in synonyms
-# nrow = 1
-
-syn_b <- inner_join(Syn1235P_2, pan, by = "binomial")
-setnames(syn_b, "binomial", "binomial_synonym")
-setnames(syn_b, "binomial_IUCN", "binomial")
-
-
-flip <- left_join(hdg, syn_a)
-hi <- rbind(hdg, syn_a)
-bla <- merge(hdg, syn_a, by = "binomial", all.x = TRUE)
-# maybe do rbind and add a binomial_synonym column to hdg and remove columns not needed from syn_a
-# then delete duplicates with NAs somehow
-
-good <- left_join(hdg, syn_a)
-# this might be working - check
-
-#else remove NA species matching syn_a before merging
-
-it <- merge(hdg, syn_a, by = "binomial", all = TRUE)
-it[it$binomial == "Aethomys granti",]
+top <- rbind(hdg, syn_comb)
+# Combine matched species from synonyms with matched species from IUCN and trait database
 
 ########### Amniote - mammals ####################
 

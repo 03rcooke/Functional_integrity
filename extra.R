@@ -188,3 +188,47 @@ Syn_1 <- anti_join(pan, Syn1235P_1, by = "binomial")
 Syn_T <- pan[!(pan$binomial %in% c(as.vector(Syn_1$binomial))),]
 # removed species listed by synonyms but not listed by IUCN
 # nrow = 3
+
+str_split_fixed(Syn1235P$syn_name1, ", ", 2)
+
+# if else chained loop to split data in to first, second, third and fourth synonyms depending on the species with the most synonyms in data frame
+
+if(max(as.vector(table(Syn1235P$binomial))) == 1) {
+  Syn1235P_1 <- Syn1235P[!duplicated(Syn1235P$binomial),] # create data frame of first synonyms
+} else {
+  if(max(as.vector(table(Syn1235P$binomial))) == 2) {
+    Syn1235P_1 <- Syn1235P[!duplicated(Syn1235P$binomial),] # create data frame of first synonyms
+    Syn1235P_2 <- Syn1235P[duplicated(Syn1235P$binomial),] # create data frame of second synonyms
+  } else {
+    if(max(as.vector(table(Syn1235P$binomial))) == 3) {
+      Syn1235P_1 <- Syn1235P[!duplicated(Syn1235P$binomial),] # create data frame of first synonyms
+      Syn1235P_T <- Syn1235P[duplicated(Syn1235P$binomial),] # create data frame of second synonyms
+      Syn1235P_2 <- Syn1235P_T[!duplicated(Syn1235P_T$binomial),] # create temporary dataframe
+      Syn1235P_3 <- Syn1235P_T[duplicated(Syn1235P_T$binomial),] # create data frame of third synonyms
+      rm(Syn1235P_T)
+    } else {
+      if(max(as.vector(table(Syn1235P$binomial))) == 4) {
+        Syn1235P_1 <- Syn1235P[!duplicated(Syn1235P$binomial),] # create data frame of first synonyms
+        Syn1235P_T <- Syn1235P[duplicated(Syn1235P$binomial),] # create temporary dataframe
+        Syn1235P_2 <- Syn1235P_T[!duplicated(Syn1235P_T$binomial),] # create data frame of second synonyms
+        Syn1235P_T <- Syn1235P_T[duplicated(Syn1235P_T$binomial),] # create temporary dataframe
+        Syn1235P_3 <- Syn1235P_T[!duplicated(Syn1235P_T$binomial),] # create data frame of third synonyms
+        Syn1235P_4 <- Syn1235P_T[duplicated(Syn1235P_T$binomial),] # create data frame of fourth synonyms
+        rm(Syn1235P_T)
+      }}}}
+
+
+grep("[[:space:]]", Syn1235P$syn_name3, value = TRUE, invert = TRUE)
+
+IUCN_syn_1 <- anti_join(Syn1235P, pan, by = "binomial"); IUCN_syn_1 <- arrange(IUCN_syn_1, binomial_IUCN) # order data by binomial A-Z
+# IUCN species not listed in first synonyms, i.e. species that need further matching efforts
+# nrow = 4
+
+
+trait_database <- anti_join(trait, species, by = "binomial")
+# Species listed by trait database but not listed by IUCN
+# nrow = 612
+
+
+missing <- apply(trait_data_PanTHERIA[,-(60:63)], 1, function(x){any(is.na(x))})
+sum(missing)

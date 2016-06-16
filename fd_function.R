@@ -3,10 +3,15 @@
 ## Description: Function to calculate functional diversity indices
 ## Author: R.S.C. Cooke, R.S.Cooke@soton.ac.uk
 ## Date: March 2016 - 
-## Outputs: Function named 'FUN'
+## Outputs: Function named "fd_eco"
+## Options: site = species composition data for each site
+##          trait = trait data to be used
+##          corr = correction to be applied
+##          spp_list = save list of all species used as a .csv?
+##          tree = save a Newick format version of the functional dendrogram used
 ## --------------------------------------------------------------
 
-FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE, tree = FALSE) 
+fd_eco <- function(site, trait, corr = "cailliez", spp_list = FALSE, tree = FALSE) 
 {
   # Set up required packages
   if (!require("pacman")) install.packages("pacman")
@@ -253,23 +258,34 @@ FUN <- function(site, trait, corr = "cailliez", spp_list = FALSE, tree = FALSE)
   # Combine dendrogram and text plots
   dendro <- plot_grid(dendro_plot, dendro_text, align="h", rel_widths = c(3,1))
   
+  # Session information
+  session_info <- devtools::session_info()
+  
+  # Create list of outputs
   stats <- list(
-    ecoregions = e[1],
-    spp_total = spp_total,
-    spp_missing = spp_missing,
-    spp_final = spp_final,
-    k = c_,
-    CWM = CWM,
-    FRed = res,
-    FDis = FD$FDis)
+    ecoregions = e[1], # @stats$ecoregions
+    spp_total = spp_total, # @stats$spp_total
+    spp_missing = spp_missing, # @stats$spp_missing
+    spp_final = spp_final, # @stats$spp_final
+    k = c_, # @stats$k
+    CWM = CWM, # @stats$CWM
+    FRed = res, # @stats$FRed
+    FDis = FD$FDis) # @stats$FDis
   
+  # Create list of plots
   plots <- list(
-    clus = clus,
-    eval = eval,
-    dendro = dendro)
+    clus = clus, # @plots$clus
+    eval = eval, # @plots$eval
+    dendro = dendro) # @plots$dendro
   
-  result <- setClass("result", slots = c(stats = "list", plots = "list"))
-  result <- result(stats = stats, plots = plots)
+  # Create list for session information
+  session_info <- list(
+    session_info = session_info
+  )
+  
+  # Combine two lists of outputs into slots
+  result <- setClass("result", slots = c(stats = "list", plots = "list", session_info = "list"))
+  result <- result(stats = stats, plots = plots, session_info = session_info)
   
   return(result)
-} # end of FUN function
+} # end of fd_eco function
