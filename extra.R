@@ -232,3 +232,9 @@ trait_database <- anti_join(trait, species, by = "binomial")
 
 missing <- apply(trait_data_PanTHERIA[,-(60:63)], 1, function(x){any(is.na(x))})
 sum(missing)
+
+big <- Reduce(function(x, y) merge(x, y, by = c("id_no", "binomial", "presence", "origin", "shape_Area")), list(trait_P$trait_data, trait_A$trait_data, trait_E$trait_data, trait_M$trait_data)) # merge trait data from all databases
+
+
+colnames(et)[3] <- "binomial"
+# set column Scientific to binomial to match species data

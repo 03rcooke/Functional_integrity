@@ -3,10 +3,12 @@
 ## Description: Function to calculate functional diversity indices
 ## Author: R.S.C. Cooke, R.S.Cooke@soton.ac.uk
 ## Date: March 2016 - 
+## Inputs: species data per ecoregion from eco_species.R script
+##            site = species composition data for each site
+##         trait data from function 'trait'
+##            trait = trait data to be used
 ## Outputs: Function named "fd_eco"
-## Options: site = species composition data for each site
-##          trait = trait data to be used
-##          corr = correction to be applied
+## Options: corr = correction to be applied
 ##          spp_list = save list of all species used as a .csv?
 ##          tree = save a Newick format version of the functional dendrogram used
 ## --------------------------------------------------------------

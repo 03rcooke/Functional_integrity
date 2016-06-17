@@ -3,6 +3,8 @@
 ## Description: Code to run "trait" function
 ## Author: R.S.C. Cooke, R.S.Cooke@soton.ac.uk
 ## Date: June 2016 - 
+## Inputs: species data (list of species)
+##         trait data (trait databases) set up with the species name column identifed as "binomial"
 ## Outputs: 
 ## --------------------------------------------------------------
 
@@ -10,14 +12,14 @@
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(dplyr)
 
-# dplyr: used to compare order data frames # calls: arrange
+# dplyr: used to order data frames and duplicate binomial column # calls: arrange, mutate
 
 ## Read in species unique lists
 IUCN_species <- read.csv("ALL_Mammals_1_2_3_5_unique.csv", stringsAsFactors = FALSE)
 # All mammals for presence = extant; origin = native, reintroduced, introduced, origin uncertain
 # nrow = 5235
 
-### Perform code for each trait database: PanTHERIA, Amniote, EltonTraits, MammalDIET
+### Perform code for each trait MAMMAL database: PanTHERIA, Amniote, EltonTraits, MammalDIET
 
 ######## PanTHERIA ##############
 
@@ -105,8 +107,8 @@ nrow(trait_data_Amniote) - nrow(IUCN_Amniote) # Number of species matched to tra
 et <- read.csv("MamFuncDat.csv", stringsAsFactors = FALSE)
 # nrow = 5400
 
-colnames(et)[3] <- "binomial"
-# set column Scientific to binomial to match species data
+et <- mutate(et, binomial = Scientific)
+# duplicate scientific column and name it binomial to match species data
 
 et <- arrange(et, binomial)
 # order data by binomial A-Z

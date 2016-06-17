@@ -3,9 +3,11 @@
 ## Description: Function to match IUCN species data to trait databases
 ## Author: R.S.C. Cooke, R.S.Cooke@soton.ac.uk
 ## Date: June 2016 - 
+## Inputs: species data
+##            species = the list of species to match the trait data against
+##         trait database to be matched to the species data
+##            trait = the trait data set up with the species name column identifed as "binomial"
 ## Outputs: Function named "trait"
-## Options: trait = the trait data set up with the species name column identifed as binomial
-##          species = the list of species to match the trait data against
 ## --------------------------------------------------------------
 
 trait <- function(trait, species) 
