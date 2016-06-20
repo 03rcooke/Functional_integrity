@@ -37,3 +37,4 @@ eco1 <- eco1[-c(1:2,31:32)] # drop geographic coordinates and empty columns
 # Rename columns with shorter, lower case names - match column names in ArcGIS attribute tables
 names(eco1) <- c("OBJECTid", "id_no", "binomial", "presence", "origin", "seasonal", "compiler", "year", "citation", "source", "dist_comm", "island", "subspecies", "subpop", "legend", "tax_comm", "kingdom_na", "phylum_nam", "class_name", "order_name", "family_nam", "genus_name", "species_na", "code", "shape_Leng", "Shape_Length", "Shape_Area", "eco_code")
 
+#saveRDS(eco1, "eco.rds")

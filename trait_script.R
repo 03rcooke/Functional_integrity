@@ -10,9 +10,11 @@
 
 # Set up required packages
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(dplyr)
+pacman::p_load(dplyr, robustbase, data.table)
 
-# dplyr: used to order data frames and duplicate binomial column # calls: arrange, mutate
+# dplyr: used to order data frames, duplicate binomial column, select columns, join data # calls: arrange, mutate, select, inner_join
+# robustbase: used to calcultae row medians # calls: rowMedians
+# data.table: used to set names of columns # calls: setnames
 
 ## Read in species unique lists
 IUCN_species <- read.csv("ALL_Mammals_1_2_3_5_unique.csv", stringsAsFactors = FALSE)
@@ -21,7 +23,7 @@ IUCN_species <- read.csv("ALL_Mammals_1_2_3_5_unique.csv", stringsAsFactors = FA
 
 ### Perform code for each trait MAMMAL database: PanTHERIA, Amniote, EltonTraits, MammalDIET
 
-######## PanTHERIA ##############
+### PanTHERIA ##############
 
 ## read in PanTHERIA trait database
 pan <- read.csv("PanTHERIA_1-0_WR05_Aug2008.csv", stringsAsFactors = FALSE)
@@ -61,7 +63,7 @@ nrow(trait_data_PanTHERIA) - nrow(IUCN_PanTHERIA) # Number of species matched to
 
 #subset data after function to remove species with just IUCN35
 
-########### Amniote - mammals ####################
+### Amniote - mammals ####################
 
 ## read in Amniote trait database
 amn <- read.csv("Amniote_Database_Aug_2015.csv", stringsAsFactors = FALSE)
@@ -101,7 +103,7 @@ nrow(trait_data_Amniote) - nrow(IUCN_Amniote) # Number of species matched to tra
 # adult_body_mass_g = 4323 (83%)
 # litter_or_clutch_size_n = 3262 (62%)
 
-########### EltonTraits 1.0  - mammals ####################
+### EltonTraits 1.0  - mammals ####################
 
 ## read in Elton Traits 1.0 database
 et <- read.csv("MamFuncDat.csv", stringsAsFactors = FALSE)
@@ -137,7 +139,7 @@ nrow(trait_data_Elton) - nrow(IUCN_Elton) # Number of species matched to trait d
 # Activity.Nocturnal = 4971 (95%)
 # Diet = 4971 (95%)
 
-########### MammalDiet ####################
+### MammalDiet ####################
 
 ## read in MammalDiet 1.0 trait database
 md <- read.csv("MammalDIET_V1.0.csv")
@@ -171,4 +173,50 @@ nrow(trait_data_MD) - nrow(IUCN_MD) # Number of species matched to trait data
 #trait_data_MD[trait_data_MD==-999] <- NA # turn -999 to NAs
 #apply(trait_data_MD, 2, function(x) length(which(!is.na(x)))) # count per column number of values
 # Diet = 5130-5146 (98%)
+
+### Combine trait data ####
+
+trait_P <- readRDS("trait_PanTHERIA.rds")
+trait_A <- readRDS("trait_Amniote.rds")
+trait_E <- readRDS("trait_Elton.rds")
+trait_M <- readRDS("trait_MD.rds")
+
+big_mam <- Reduce(function(x, y) inner_join(x, y, by = c("id_no", "binomial", "presence", "origin", "shape_Area")), list(trait_P$trait_data, trait_A$trait_data, trait_E$trait_data, trait_M$trait_data)) # join trait data from all databases
+big_mam <- big_mam[,!duplicated(colnames(big_mam))] # remove duplicated syn_name columns produced during inner_join
+big_mam <- arrange(big_mam, binomial) # order data by binomial A-Z
+# nrow = 5235
+
+#saveRDS(big_mam, "trait_comb.rds")
+
+big_mam_IUCN_names <- Reduce(function(x, y) full_join(x, y, by = c("binomial_syn")), list(trait_P$IUCN_names, trait_A$IUCN_names, trait_E$IUCN_names, trait_M$IUCN_names)) # join unmatched names from all databases
+# nrow = 673
+
+#saveRDS(big_mam_IUCN_names, "trait_IUCN.rds")
+
+### Taxonomic data frame ###
+
+big_mam <- readRDS("trait_comb.rds")
+
+taxonomic <- select(big_mam, id_no:origin, MSW05_Genus, MSW05_Species, genus, species, Scientific, Genus, Species) # select columns id_no to origin and then taxonomic related columns
+# create data frame of taxonomic information across the databases to compare taxonomies used
+
+# create new column with full scientific name
+taxonomic <- mutate(taxonomic, binomial_PanTHERIA = paste(MSW05_Genus, MSW05_Species, sep = " "))
+taxonomic <- mutate(taxonomic, binomial_Amniote = paste(genus, species, sep = " "))
+taxonomic <- mutate(taxonomic, binomial_MD = paste(Genus, Species, sep = " "))
+setnames(taxonomic, "Scientific", "binomial_Elton")
+
+taxonomic <- select(taxonomic, id_no:origin, binomial_PanTHERIA, binomial_Amniote, binomial_MD, binomial_Elton)
+
+### Trait data frames: body_mass, litter_size ###
+
+body_mass <- select(big_mam, id_no:origin, X5.1_AdultBodyMass_g, adult_body_mass_g, BodyMass.Value) # create data frame of body mass data to compare across databases
+names(body_mass) <- c("id_no", "binomial", "presence", "origin", "body_mass_PanTHERIA", "body_mass_Amniote", "body_mass_Elton")
+body_mass[body_mass==-999] <- NA # turn -999 to NAs
+body_mass <- mutate(body_mass, body_mass_median = rowMedians(as.matrix(select(body_mass, starts_with("body_mass_"))), na.rm = TRUE))
+
+
+litter_size <- select(big_mam, id_no:origin, X15.1_LitterSize, litter_or_clutch_size_n) # create data frame of litter size data to compare across databases
+names(litter_size) <- c("id_no", "binomial", "presence", "origin", "litter_size_PanTHERIA", "litter_size_Amniote")
+litter_size[litter_size==-999] <- NA # turn -999 to NAs
 
